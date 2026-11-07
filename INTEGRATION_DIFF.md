@@ -1,7 +1,10 @@
-# INTEGRATION_DIFF.md — v1.6.0
+# INTEGRATION_DIFF.md — v1.6.1
 
 Reference only: every change below is already applied inside this project; nothing has to be merged by hand. See CHANGELOG.md for the version history.
 Compared with v1.0.0 (your original upload): 12 files changed, 10 new files. `src/lib/db.ts`, accounting math, voice files, transaction labels, Cheque Status, "This month" and `PrintHeader` are untouched.
+
+## L. Safe Supabase check in the auth attacher (v1.6.1)
+- `auth-attacher.ts`: early `return next()` when `VITE_SUPABASE_URL` or `VITE_SUPABASE_PUBLISHABLE_KEY` is missing; the rest of the function is unchanged.
 
 ## K. Reports tiles, Quick Actions colours, dropdown scroll, theme-switch animation (v1.6.0)
 - `reports.tsx`: summary grid is 2 columns on phones (odd last card full width); `sm`+ and print classes unchanged.
