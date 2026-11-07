@@ -1,9 +1,14 @@
 # CHANGELOG — Mussa Finance
 
-Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.0.zip`), in this file, and inside the app under **Settings & Backup → App version**.
+Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.1.zip`), in this file, and inside the app under **Settings & Backup → App version**.
 When something is wrong, tell me: **the version shown in Settings + the screen + what you did + a screenshot**. I will look only at the files listed for that version.
 
-## v1.6.0 — Reports tiles, Quick Actions colours, bank dropdown scroll, theme-switch animation (current)
+## v1.6.1 — Fix: server-function calls no longer crash without Supabase variables (current)
+- `src/integrations/supabase/auth-attacher.ts`: `attachSupabaseAuth` now checks `import.meta.env.VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` first. If either is missing it simply returns `next()` (no session lookup, no error), so local-first server functions such as `getGeminiLiveConfig` keep working without a connected Supabase backend. With both set, behaviour is exactly as before.
+- Nothing else changed (`start.ts`, `client.ts`, `db.ts` untouched).
+- `src/lib/version.ts`: 1.6.1.
+
+## v1.6.0 — Reports tiles, Quick Actions colours, bank dropdown scroll, theme-switch animation
 - **Reports** (`routes/reports.tsx`): on a phone the 9 summary cards (Payment Received, Payment Issued, Sale, Purchase, Salary, Advance, Expense, Capital Introduced, Internal Transfer) sit in 2 columns; the last one (Internal Transfer) is full width. Tablet/desktop and print layouts are unchanged.
 - **Quick Actions colours** (`styles.css`, `--qa-*` only): each button now uses its module's real colour: Receive Payment = green, Sale = ice blue (they were swapped), Issue Payment = deep crimson (was baby pink), Purchase = amber (unchanged), Expense = terracotta (darker and redder, clearly different from amber), Add Account and Heat unchanged. The same hue changes are applied in the dark theme (its brightness/dullness was not touched).
 - **Bank dropdown scroll** (`components/app/inputs.tsx`, `NativeSelect`): the list inside the entry-form dialog now scrolls with finger/wheel (the dialog's scroll lock was swallowing it). Applies to every dropdown that uses `NativeSelect`.
