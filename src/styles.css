@@ -499,17 +499,25 @@
   --muted-foreground: oklch(1 0 0 / 0.62);
 }
 
-/* Splash: frosted glass over drifting ambient lights */
+/* Splash: soft pastel orbs (peach, blue, red, pale blue) scattered over a light periwinkle base, with a pale glow behind the logo */
 .splash {
   /* Standard loading screen: fixed palette, deliberately independent of the light/dark app theme. */
-  --splash-bg: oklch(0.22 0.03 262); --splash-orb-1: oklch(0.6 0.17 25 / 0.5); --splash-orb-2: oklch(0.58 0.1 68 / 0.5); --splash-orb-3: oklch(0.6 0.1 290 / 0.45);
-  --splash-frost: oklch(0.26 0.03 262 / 0.45); --splash-text: oklch(0.92 0.01 250);
+  --splash-bg: #D8DBE8; --splash-text: #1F2A3D;
   position: fixed; inset: 0; overflow: hidden; display: grid; place-items: center; background: var(--splash-bg); animation: splash-in 0.4s ease-out; }
-.splash-orb { position: absolute; border-radius: 9999px; filter: blur(40px); will-change: transform; }
-.splash-orb-1 { width: 55vmax; height: 55vmax; left: -15vmax; top: -10vmax; background: var(--splash-orb-1); animation: orb-a 14s ease-in-out infinite alternate; }
-.splash-orb-2 { width: 60vmax; height: 60vmax; right: -20vmax; bottom: -15vmax; background: var(--splash-orb-2); animation: orb-b 17s ease-in-out infinite alternate; }
-.splash-orb-3 { width: 40vmax; height: 40vmax; left: 30%; top: 40%; background: var(--splash-orb-3); animation: orb-c 12s ease-in-out infinite alternate; }
-.splash-frost { position: absolute; inset: 0; background: var(--splash-frost); backdrop-filter: blur(30px) saturate(140%); }
+.splash-orb { --x: 50%; --y: 50%; --s: 50vw; --c: #fff; --a: 0.8; position: absolute; border-radius: 9999px; width: var(--s); height: var(--s); left: calc(var(--x) - var(--s) / 2); top: calc(var(--y) - var(--s) / 2); will-change: transform;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c) calc(var(--a) * 100%), transparent), color-mix(in srgb, var(--c) calc(var(--a) * 45%), transparent) 45%, transparent 100%); }
+.splash-orb-1 { --x: 14%; --y: 8%; --s: 81vw; --c: #F7BE92; --a: 0.95; animation: orb-d 13s ease-in-out infinite alternate; }
+.splash-orb-2 { --x: 74%; --y: 17%; --s: 59vw; --c: #5C90D2; --a: 0.85; animation: orb-e 16s ease-in-out infinite alternate; }
+.splash-orb-3 { --x: 46%; --y: 3%; --s: 43vw; --c: #F7BE92; --a: 0.55; animation: orb-f 10s ease-in-out infinite alternate; }
+.splash-orb-4 { --x: 94%; --y: 40%; --s: 59vw; --c: #F7BE92; --a: 0.95; animation: orb-e 13s ease-in-out infinite alternate; }
+.splash-orb-5 { --x: 4%; --y: 50%; --s: 54vw; --c: #5C90D2; --a: 0.8; animation: orb-f 16s ease-in-out infinite alternate; }
+.splash-orb-6 { --x: 36%; --y: 37%; --s: 35vw; --c: #5C90D2; --a: 0.45; animation: orb-d 10s ease-in-out infinite alternate; }
+.splash-orb-7 { --x: 66%; --y: 54%; --s: 38vw; --c: #F7BE92; --a: 0.55; animation: orb-f 13s ease-in-out infinite alternate; }
+.splash-orb-8 { --x: 50%; --y: 46%; --s: 40vw; --c: #F6F2F4; --a: 0.8; }
+.splash-orb-9 { --x: 22%; --y: 80%; --s: 59vw; --c: #EA5F55; --a: 0.85; animation: orb-d 10s ease-in-out infinite alternate; }
+.splash-orb-10 { --x: 80%; --y: 84%; --s: 65vw; --c: #5C90D2; --a: 0.75; animation: orb-e 13s ease-in-out infinite alternate; }
+.splash-orb-11 { --x: 55%; --y: 97%; --s: 81vw; --c: #BBD2EA; --a: 0.95; animation: orb-f 16s ease-in-out infinite alternate; }
+.splash-orb-12 { --x: 50%; --y: 70%; --s: 49vw; --c: #BBD2EA; --a: 0.8; animation: orb-d 10s ease-in-out infinite alternate; }
 .splash-content { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; animation: splash-rise 0.7s cubic-bezier(.2,.8,.2,1) both; }
 .splash-mark { width: clamp(3.25rem, 14vw, 4.5rem); height: auto; object-fit: contain; animation: splash-breathe 2.4s ease-in-out infinite; filter: drop-shadow(0 6px 14px oklch(0 0 0 / 0.15)); }
 .splash-title { font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; color: var(--splash-text); opacity: 0.8; }
@@ -518,6 +526,9 @@
 @keyframes orb-a { to { transform: translate(18vw, 22vh) scale(1.1); } }
 @keyframes orb-b { to { transform: translate(-22vw, -18vh) scale(0.9); } }
 @keyframes orb-c { to { transform: translate(-25vw, -20vh) scale(1.2); } }
+@keyframes orb-d { to { transform: translate(7vw, 5vh) scale(1.08); } }
+@keyframes orb-e { to { transform: translate(-6vw, 6vh) scale(0.94); } }
+@keyframes orb-f { to { transform: translate(5vw, -6vh) scale(1.06); } }
 @keyframes splash-in { from { opacity: 0; } }
 @keyframes splash-rise { from { opacity: 0; transform: translateY(8px) scale(0.96); } }
 @keyframes splash-breathe { 50% { transform: scale(1.04); } }

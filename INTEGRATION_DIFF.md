@@ -1,7 +1,12 @@
-# INTEGRATION_DIFF.md — v1.6.1
+# INTEGRATION_DIFF.md — v1.6.2
 
 Reference only: every change below is already applied inside this project; nothing has to be merged by hand. See CHANGELOG.md for the version history.
 Compared with v1.0.0 (your original upload): 12 files changed, 10 new files. `src/lib/db.ts`, accounting math, voice files, transaction labels, Cheque Status, "This month" and `PrintHeader` are untouched.
+
+## M. Launch screens (v1.6.2)
+- `public/icon-*.png`, `apple-touch-icon.png`: regenerated artwork; `manifest.webmanifest`: `background_color` only.
+- `styles.css`: `.splash` block rewritten (orbs as CSS classes, no frost); three small drift keyframes added (`orb-d/e/f`).
+- `AppShell.tsx` `SplashScreen`: 3 orb divs + frost div replaced by one 12-orb map.
 
 ## L. Safe Supabase check in the auth attacher (v1.6.1)
 - `auth-attacher.ts`: early `return next()` when `VITE_SUPABASE_URL` or `VITE_SUPABASE_PUBLISHABLE_KEY` is missing; the rest of the function is unchanged.
