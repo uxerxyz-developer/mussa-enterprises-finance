@@ -116,10 +116,7 @@ function useShortcuts() {
 function SplashScreen() {
   return (
     <div className="splash" role="status" aria-label="Loading Mussa Enterprises">
-      <div aria-hidden="true" className="splash-orb splash-orb-1" />
-      <div aria-hidden="true" className="splash-orb splash-orb-2" />
-      <div aria-hidden="true" className="splash-orb splash-orb-3" />
-      <div aria-hidden="true" className="splash-frost" />
+      {Array.from({ length: 12 }, (_, i) => <div key={i} aria-hidden="true" className={`splash-orb splash-orb-${i + 1}`} />)}
       <div className="splash-content">
         <img src={mussaMark} alt="" className="splash-mark" />
         <div className="splash-title">Mussa Enterprises</div>

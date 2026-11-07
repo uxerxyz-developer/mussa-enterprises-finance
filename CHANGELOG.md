@@ -1,9 +1,15 @@
 # CHANGELOG — Mussa Finance
 
-Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.1.zip`), in this file, and inside the app under **Settings & Backup → App version**.
+Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.2.zip`), in this file, and inside the app under **Settings & Backup → App version**.
 When something is wrong, tell me: **the version shown in Settings + the screen + what you did + a screenshot**. I will look only at the files listed for that version.
 
-## v1.6.1 — Fix: server-function calls no longer crash without Supabase variables (current)
+## v1.6.2 — New launch screens: pastel orbs (current)
+- **System splash (Android, shown before the app opens)**: new icon artwork (`public/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`): light periwinkle base with soft peach and blue orbs and a pale glow behind the clean M logo, edges fading into the base so no box edge shows. The M on the splash (maskable icon) is about 15% smaller; the other icons keep their logo size. `manifest.webmanifest`: only `background_color` changed to `#D8DBE8` to match. `theme_color` left as it was.
+- **In-app loading splash** (`styles.css` `.splash*`, `AppShell.tsx` orb markup): the violet orb and the blue frost layer (the muddy tint) are gone. 12 soft orbs (peach, blue, one red at bottom-left, pale blue) are scattered at varied sizes over a light base, a few reach near the logo, with a pale glow behind it; they still drift slowly (off with "Reduce motion"). Text and loading line are dark navy for the light background. Logo and text sizes unchanged.
+- Nothing in `db.ts`, accounting, ledger, vouchers or other screens changed. To see the new system splash/icon, uninstall the PWA and install it again (Android caches the old icon).
+- `src/lib/version.ts`: 1.6.2.
+
+## v1.6.1 — Fix: server-function calls no longer crash without Supabase variables
 - `src/integrations/supabase/auth-attacher.ts`: `attachSupabaseAuth` now checks `import.meta.env.VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` first. If either is missing it simply returns `next()` (no session lookup, no error), so local-first server functions such as `getGeminiLiveConfig` keep working without a connected Supabase backend. With both set, behaviour is exactly as before.
 - Nothing else changed (`start.ts`, `client.ts`, `db.ts` untouched).
 - `src/lib/version.ts`: 1.6.1.
