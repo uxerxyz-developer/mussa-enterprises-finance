@@ -12,7 +12,7 @@ import { AccountForm } from "@/components/app/AccountForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { workerTotals, CASH, ENTRY_TYPES, fundList, liveAccounts, liveEntries, liveProduction, partyTotals, stockSummary, useData, type EntryType } from "@/lib/db";
+import { workerTotals, CASH, ENTRY_TYPES, fundList, isNetPaid, liveAccounts, liveEntries, liveProduction, notBounced, partyTotals, stockSummary, useData, type EntryType } from "@/lib/db";
 import { fmtDate, fmtPKR, fmtTon, todayISO } from "@/lib/format";
 import { ALL_WIDGETS, dashboard, haptic, MAX_H, MAX_W, useDashboard, WIDGET_LABELS, type WidgetId, type WidgetLayout } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
@@ -47,7 +47,7 @@ function useStats() {
     const live = liveEntries(d);
     const month = todayISO().slice(0, 7);
     const thisMonth = live.filter((e) => e.date.startsWith(month));
-    const sum = (t: EntryType) => thisMonth.filter((e) => e.type === t).reduce((s, e) => s + e.amount, 0);
+    const sum = (t: EntryType) => thisMonth.filter((e) => e.type === t && notBounced(e)).reduce((s, e) => s + e.amount, 0);
     const accounts = liveAccounts(d);
     const name = (id?: string) => d.accounts.find((a) => a.id === id)?.name;
     const matName = (id: string) => d.materials.find((m) => m.id === id)?.name ?? "—";
@@ -61,8 +61,8 @@ function useStats() {
       activity: [...live].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
       vouchers: live.filter((e) => ["sale", "purchase", "inward", "outward"].includes(e.type)).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
       monthSales: sum("sale"), monthPurchases: sum("purchase"), monthExpenses: sum("expense") + sum("salary"),
-      monthIn: thisMonth.filter((e) => ENTRY_TYPES[e.type].flow === "in").reduce((s, e) => s + e.amount, 0),
-      monthOut: thisMonth.filter((e) => ENTRY_TYPES[e.type].flow === "out").reduce((s, e) => s + e.amount, 0),
+      monthIn: thisMonth.filter((e) => notBounced(e) && (ENTRY_TYPES[e.type].flow === "in" || (e.type === "sale" && isNetPaid(e)))).reduce((s, e) => s + e.amount, 0),
+      monthOut: thisMonth.filter((e) => notBounced(e) && (ENTRY_TYPES[e.type].flow === "out" || (e.type === "purchase" && isNetPaid(e)))).reduce((s, e) => s + e.amount, 0),
       accountCount: accounts.filter((a) => !a.equity).length,
       workerCount: accounts.filter((a) => a.type === "worker").length,
       salaryRemaining: workerTotals(d, month).salaryRemaining,

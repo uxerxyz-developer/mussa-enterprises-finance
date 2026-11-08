@@ -1,9 +1,28 @@
 # CHANGELOG — Mussa Finance
 
-Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.2.zip`), in this file, and inside the app under **Settings & Backup → App version**.
+Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.4.zip`), in this file, and inside the app under **Settings & Backup → App version**.
 When something is wrong, tell me: **the version shown in Settings + the screen + what you did + a screenshot**. I will look only at the files listed for that version.
 
-## v1.6.2 — New launch screens: pastel orbs (current)
+## v1.6.4 — Net payments in cash/bank, bounced cheques out of every total, Cheque Status, Treasury and mic polish (current)
+- **Net sale / net purchase now move the money** (`db.ts` `entryFunds`, new `isNetPaid`): with a payment method recorded, a net purchase takes the amount out of Cash in hand (cash) or the chosen bank (cheque/online), and a net sale brings it in. Cheque rules are the same as before: pending is listed separately, cleared changes the balance, bounced changes nothing. The party ledger, party balance, `signedForAccount` and credit entries are unchanged (a net trade still leaves Debit/Credit empty). A net entry with no payment method moves no money. Because balances are always derived from entries, this also applies to existing net entries that have a method.
+- **Bounced cheques are not counted in any total** (new `notBounced` helper, `db.ts`): Reports type totals and worker salary/advance, Dashboard month totals and In/Out, the totals under the entries tables (Sales, Purchases and the other pages, Expenses), worker salary/advance paid (`workerMonth`, `workerLifetime`) and the voice assistant's reports. The rows themselves stay in lists with their BOUNCED mark.
+- **Dashboard In/Out this month**: bounced removed, and net sale/purchase payments (with a method) included, so it agrees with the bank and cash balances.
+- **Cheque Status card**: pending cheques on net sales/purchases are included (net sale = received, net purchase = issued), so it no longer says "up to date" while Treasury shows a pending cheque.
+- **Treasury tiles**: graphics are back in the top-right corner; titles may wrap to two lines; the amount sits below at full width. Bank trend line is smoothed into a gentle wave and its arrow is an open line arrow set slightly apart from the line.
+- **Voice button (top bar)**: the glowing orbs are replaced by a soft circulating ring of three colour arcs (red-magenta, yellow-green, cyan-blue) turning at different speeds and directions, with a faint glow; brighter shades in the dark theme, deeper in the light theme. When the assistant dock is open the ring dims to about 45%; when it closes it returns to full. The old pulse ring is removed. With "Reduce motion" the ring is still.
+- Tests: `netsale.test.ts` updated for the new rule (cash, cheque, online, no method, credit, bounced helper).
+- `src/lib/version.ts`: 1.6.4.
+
+## v1.6.3 — Quick Actions colours, calmer splash, voice glow, Treasury polish
+- **Quick Actions** (`styles.css`, `--qa-*` tokens only): Purchase = `#FFC145`, Expense = `#CC2A41` (both exactly as given; the dark theme gets a slightly brighter version of the same hue). Issue Payment moved to a vermilion (orange-red) so it no longer looks like Expense. In the dark theme only the Purchase and Expense tiles use a bigger share of their own colour (`.dark .qa-tile[data-qid=...]`), which stops them going brown. Every other colour is unchanged.
+- **Loading splash**: 12 orbs reduced to 6 large soft orbs plus the glow behind the logo, sized in `vmax` so phone and desktop look alike (same colours as v1.6.2). `AppShell.tsx` renders 7 orb elements.
+- **App icon**: the M on the maskable icon is slightly larger again (30% of the icon); the orbs are unchanged.
+- **Voice assistant glow** (`GeminiLiveWorkspaceBar.css`, `.voice-aura`): richer colour, rises from the bottom only up to just above the dialog (`clamp(11rem, 30dvh, 16rem)`), travels less, and the mask and orb edges are smoother so no block shows.
+- **Treasury Position**: the corner glow has separate colours per theme (soft pastel in light, brighter in dark; `--tre-orb-*`). Tile titles are 12.5px (hero 13px) with bigger icon chips (22px). In the four small tiles the graphic now sits beside the amount (it wraps under the amount when the tile is narrow) instead of the top-right corner. Donuts are thinner with rounded ends, a softer track and a faint glow; the proportions are unchanged. `TreasuryCard.tsx`, `TreasuryViz.tsx`.
+- Nothing in `db.ts`, accounting, ledger, vouchers or `treasury-series` changed.
+- `src/lib/version.ts`: 1.6.3.
+
+## v1.6.2 — New launch screens: pastel orbs
 - **System splash (Android, shown before the app opens)**: new icon artwork (`public/icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`): light periwinkle base with soft peach and blue orbs and a pale glow behind the clean M logo, edges fading into the base so no box edge shows. The M on the splash (maskable icon) is about 15% smaller; the other icons keep their logo size. `manifest.webmanifest`: only `background_color` changed to `#D8DBE8` to match. `theme_color` left as it was.
 - **In-app loading splash** (`styles.css` `.splash*`, `AppShell.tsx` orb markup): the violet orb and the blue frost layer (the muddy tint) are gone. 12 soft orbs (peach, blue, one red at bottom-left, pale blue) are scattered at varied sizes over a light base, a few reach near the logo, with a pale glow behind it; they still drift slowly (off with "Reduce motion"). Text and loading line are dark navy for the light background. Logo and text sizes unchanged.
 - Nothing in `db.ts`, accounting, ledger, vouchers or other screens changed. To see the new system splash/icon, uninstall the PWA and install it again (Android caches the old icon).

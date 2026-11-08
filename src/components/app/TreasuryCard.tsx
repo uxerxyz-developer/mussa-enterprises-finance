@@ -92,20 +92,20 @@ export function TreasuryCard({ editing, w }: { editing: boolean; w: number }) {
         <button type="button" onClick={open("cash")}
           className="tre-tile col-span-2 flex min-w-0 items-center justify-between gap-3 rounded-2xl px-4 py-2 text-left">
           <span className="flex min-w-0 flex-col justify-center">
-            <span className="flex items-center gap-1.5 text-xs font-medium"><span className="tre-chip tre-chip-cash"><Wallet className="h-2.5 w-2.5" /></span> Cash in hand</span>
+            <span className="flex items-center gap-2 text-[13px] font-medium"><span className="tre-chip tre-chip-cash"><Wallet className="h-3.5 w-3.5" /></span> Cash in hand</span>
             <span className={cn("num mt-1 truncate font-semibold tracking-tight", cashText.length > 11 ? "text-xl" : "text-[22px]")}>{cashText}</span>
           </span>
-          <Ring parts={s.cashShare} colors={["var(--tre-cash)", "var(--tre-bank)"]} masked={hidden} stroke={15} className="aspect-square h-[92%] max-h-28"
+          <Ring parts={s.cashShare} colors={["var(--tre-cash)", "var(--tre-bank)"]} masked={hidden} stroke={11} className="aspect-square h-[92%] max-h-28"
             label={hidden || !s.cashShare.length ? undefined : `Cash ${cashPct}% · Bank ${100 - cashPct}% of liquid funds`} />
         </button>
         {tiles.map((x) => (
           <button key={x.id} type="button" onClick={open(x.id)} className="tre-tile relative flex min-w-0 flex-col justify-center rounded-2xl px-3 py-2 text-left">
-            <span className="flex items-center gap-1.5 pr-11 text-[11px] font-medium"><span className={cn("tre-chip", `tre-chip-${x.id}`)}><x.icon className="h-2.5 w-2.5 shrink-0" /></span><span className="truncate">{x.label}</span></span>
+            <span className="flex items-start gap-2 pr-11 text-[12.5px] font-medium leading-tight"><span className={cn("tre-chip", `tre-chip-${x.id}`)}><x.icon className="h-3.5 w-3.5 shrink-0" /></span><span className="line-clamp-2 min-w-0 break-words pt-[3px]">{x.label}</span></span>
             {x.id === "bank" && <span className="absolute right-2 top-2"><Trend values={s.activity} masked={hidden} /></span>}
             {x.id === "receivable" && <span className="absolute right-2.5 top-2.5"><Bars values={s.recBars} masked={hidden} /></span>}
-            {x.id === "cheques" && <span className="absolute right-2.5 top-2.5"><StatusDots pending={s.pending.length} cleared={s.cleared.length} bounced={s.bounced.length} /></span>}
-            {x.id === "payable" && <Ring parts={s.payParts} colors={payColors} masked={hidden} stroke={22} className="absolute right-2 top-1/2 h-9 w-9 -translate-y-1/2" />}
-            <span className={cn("num mt-1 truncate text-sm font-semibold tracking-tight", x.id === "payable" && "pr-10")}>{m(x.value)}</span>
+            {x.id === "cheques" && <span className="absolute right-2.5 top-3"><StatusDots pending={s.pending.length} cleared={s.cleared.length} bounced={s.bounced.length} /></span>}
+            {x.id === "payable" && <Ring parts={s.payParts} colors={payColors} masked={hidden} stroke={12} className="absolute right-2.5 top-2 h-7 w-7" />}
+            <span className="num mt-1.5 min-w-0 truncate text-[15px] font-semibold tracking-tight">{m(x.value)}</span>
             {x.note && <span className="mt-0.5 line-clamp-2 text-[10px] leading-tight opacity-75">{x.note}</span>}
           </button>
         ))}

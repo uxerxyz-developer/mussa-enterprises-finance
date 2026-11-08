@@ -3,7 +3,7 @@ import { useFlashId } from "@/lib/row-flash";
 import { Printer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Amount } from "./inputs";
-import { ENTRY_TYPES, METHODS, useData, type Entry } from "@/lib/db";
+import { ENTRY_TYPES, METHODS, notBounced, useData, type Entry } from "@/lib/db";
 import { fmtDate, fmtTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +37,7 @@ export function EntriesTable({
   const d = useData();
   const acc = (id?: string) => d.accounts.find((a) => a.id === id);
   const named = (list: { id: string; name: string }[], id?: string) => list.find((x) => x.id === id)?.name;
-  const total = entries.reduce((s, e) => s + e.amount, 0);
+  const total = entries.filter(notBounced).reduce((s, e) => s + e.amount, 0);
 
   return (
     <div className="overflow-x-auto rounded-lg border bg-card print-area">

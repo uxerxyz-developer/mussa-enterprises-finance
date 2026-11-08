@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EntriesTable } from "@/components/app/EntriesTable";
 import { PageHeader, PrintHeader } from "@/components/app/inputs";
-import { addNamed, liveEntries, removeNamed, renameNamed, useData, type Named } from "@/lib/db";
+import { addNamed, liveEntries, notBounced, removeNamed, renameNamed, useData, type Named } from "@/lib/db";
 import { fmtPKR, titleCase } from "@/lib/format";
 import { FilterBar, emptyFilters, exportEntriesCSV, filterEntries } from "./entries";
 
@@ -54,13 +54,13 @@ function ExpensesPage() {
   const list = useMemo(() => filterEntries(d, liveEntries(d).filter((e) => e.type === "expense"), f).sort((a, b) => b.date.localeCompare(a.date)), [d, f]);
   const byCat = useMemo(() => {
     const m = new Map<string, number>();
-    list.forEach((e) => {
+    list.filter(notBounced).forEach((e) => {
       const k = d.categories.find((c) => c.id === e.categoryId)?.name ?? "Uncategorised";
       m.set(k, (m.get(k) ?? 0) + e.amount);
     });
     return [...m.entries()].sort((a, b) => b[1] - a[1]);
   }, [d, list]);
-  const total = list.reduce((s, e) => s + e.amount, 0);
+  const total = list.filter(notBounced).reduce((s, e) => s + e.amount, 0);
 
   return (
     <div className="space-y-6">

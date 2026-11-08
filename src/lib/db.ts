@@ -577,11 +577,19 @@ export const inCashHand = (e: Entry) => e.type !== "transfer" && ENTRY_TYPES[e.t
 export type FundState = "cleared" | "pending" | "bounced";
 export const entryState = (e: Entry): FundState => (e.method === "cheque" ? e.chequeStatus ?? "pending" : "cleared");
 
-/** Which fund(s) an entry moves and by how much (+ in, − out), ignoring cheque state. Sales/purchases move no money. */
+/** A cheque marked bounced settled nothing, so its amount must not count in any total. */
+export const notBounced = (e: Pick<Entry, "chequeStatus">) => e.chequeStatus !== "bounced";
+/** A net (settled on the spot) sale / purchase that has a payment method: the money really moves, even though the party balance does not. */
+export const isNetPaid = (e: Pick<Entry, "type" | "payMode" | "method">) => (e.type === "sale" || e.type === "purchase") && e.payMode === "net" && !!e.method;
+
+/** Which fund(s) an entry moves and by how much (+ in, − out), ignoring cheque state. A credit sale/purchase moves no money; a net one moves it like a payment. */
 export function entryFunds(e: Entry): { fund: string; delta: number }[] {
   if (e.type === "transfer") return [{ fund: e.bankId ?? CASH, delta: -e.amount }, { fund: e.toBankId ?? CASH, delta: e.amount }];
   const flow = ENTRY_TYPES[e.type].flow;
-  if (flow === "none") return [];
+  if (flow === "none") {
+    if (!isNetPaid(e)) return [];
+    return [{ fund: e.method === "cash" ? CASH : e.bankId ?? UNASSIGNED_BANK, delta: e.type === "sale" ? e.amount : -e.amount }];
+  }
   const fund = !e.method || e.method === "cash" ? CASH : e.bankId ?? UNASSIGNED_BANK;
   return [{ fund, delta: flow === "in" ? e.amount : -e.amount }];
 }
@@ -675,15 +683,15 @@ export function partyTotals(d: Data) {
 export function workerMonth(d: Data, accountId: string, month: string) {
   const fixedWages = d.accounts.find((a) => a.id === accountId)?.fixedWages ?? 0;
   const rows = liveEntries(d).filter((e) => e.accountId === accountId && e.date.startsWith(month));
-  const paidSalary = rows.filter((e) => e.type === "salary").reduce((t, e) => t + e.amount, 0);
-  const paidAdvance = rows.filter((e) => e.type === "advance").reduce((t, e) => t + e.amount, 0);
+  const paidSalary = rows.filter((e) => e.type === "salary" && notBounced(e)).reduce((t, e) => t + e.amount, 0);
+  const paidAdvance = rows.filter((e) => e.type === "advance" && notBounced(e)).reduce((t, e) => t + e.amount, 0);
   return { fixedWages, paidSalary, paidAdvance, remaining: fixedWages - paidSalary - paidAdvance };
 }
 /** Running totals for one worker since the beginning (they do not reset each month). */
 export function workerLifetime(d: Data, accountId: string) {
   const rows = liveEntries(d).filter((e) => e.accountId === accountId);
-  const salaryPaid = rows.filter((e) => e.type === "salary").reduce((t, e) => t + e.amount, 0);
-  const advanceGiven = rows.filter((e) => e.type === "advance").reduce((t, e) => t + e.amount, 0);
+  const salaryPaid = rows.filter((e) => e.type === "salary" && notBounced(e)).reduce((t, e) => t + e.amount, 0);
+  const advanceGiven = rows.filter((e) => e.type === "advance" && notBounced(e)).reduce((t, e) => t + e.amount, 0);
   const outstanding = Math.max(0, accountBalance(d, accountId));
   return { salaryPaid, advanceGiven, outstanding };
 }
