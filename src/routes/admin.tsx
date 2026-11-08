@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/app/inputs";
 import { accountTypeLabel, checkPw, deleteItems, exportJSON, liveAccounts, liveEntries, resetAllData, restoreLog, useData, type Account, type Entry } from "@/lib/db";
 import { fmtDateTime, norm } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { fieldError } from "@/lib/field-error";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -184,7 +185,7 @@ function DangerZone() {
     setBusy(true);
     const ok = await checkPw(pin);
     setBusy(false);
-    if (!ok) { toast.error("Wrong PIN"); return; }
+    if (!ok) { fieldError("admin-reset-pin", "Wrong PIN"); return; }
     if (!confirm("Final confirmation: erase ALL accounts, entries, loans, logs and login on this device? This cannot be undone.")) return;
     resetAllData();
     toast.success("App reset complete");
@@ -205,7 +206,7 @@ function DangerZone() {
           <label className="text-sm font-medium">Type <span className="font-mono text-destructive">RESET</span> to confirm</label>
           <Input value={word} onChange={(e) => setWord(e.target.value)} placeholder="RESET" autoComplete="off" />
           <label className="text-sm font-medium">Your PIN / password</label>
-          <Input type="password" inputMode="numeric" value={pin} onChange={(e) => setPin(e.target.value)} />
+          <Input id="admin-reset-pin" type="password" inputMode="numeric" value={pin} onChange={(e) => setPin(e.target.value)} />
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button variant="destructive" disabled={busy || word !== "RESET" || !pin} onClick={reset}>Erase everything</Button>

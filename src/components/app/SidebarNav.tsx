@@ -6,6 +6,11 @@ import { cn } from "@/lib/utils";
 export type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 export type NavGroup = { title: string; items: readonly NavItem[] };
 
+/** Module colour of a menu item (the same tokens as the Quick Actions); other items use the brand violet. */
+const ACCENT: Record<string, string> = {
+  "/production": "var(--qa-heat)", "/sales": "var(--qa-sale)", "/purchases": "var(--qa-purchase)", "/accounts": "var(--qa-account)",
+  "/expenses": "var(--qa-expense)", "/cashbook": "var(--qa-receive)", "/banks": "var(--tre-bank)",
+};
 const isActive = (to: string, pathname: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
 
 /**
@@ -20,14 +25,14 @@ export function NavAccordion({ groups, onNavigate, wrap }: { groups: readonly Na
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const first = useRef(true);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [ind, setInd] = useState<{ y: number; h: number } | null>(null);
+  const [ind, setInd] = useState<{ y: number; h: number; c: string } | null>(null);
   // The accent bar slides to the current page (only while that page's category is open).
   const measure = () => {
     const c = wrapRef.current;
     const a = c?.querySelector<HTMLElement>(".nav-item-active");
     if (!c || !a || a.closest<HTMLElement>(".nav-collapse")?.dataset["open"] !== "true") { setInd(null); return; }
     const cr = c.getBoundingClientRect(), ar = a.getBoundingClientRect();
-    setInd({ y: ar.top - cr.top + ar.height * 0.22, h: ar.height * 0.56 });
+    setInd({ y: ar.top - cr.top + ar.height * 0.22, h: ar.height * 0.56, c: getComputedStyle(a).getPropertyValue("--nv").trim() });
   };
   useLayoutEffect(() => { measure(); }, [pathname, open]);
   useEffect(() => {
@@ -44,7 +49,7 @@ export function NavAccordion({ groups, onNavigate, wrap }: { groups: readonly Na
 
   return (
     <div ref={wrapRef} className="relative space-y-0.5">
-      <span aria-hidden className="nav-indicator" style={ind ? { transform: `translateY(${ind.y}px)`, height: ind.h, opacity: 1 } : { opacity: 0 }} />
+      <span aria-hidden className="nav-indicator" style={ind ? { transform: `translateY(${ind.y}px)`, height: ind.h, opacity: 1, ...(ind.c ? { background: ind.c, ["--nv-ind" as string]: ind.c } : {}) } : { opacity: 0 }} />
       {groups.map((g, gi) => {
         const isOpen = !!open[g.title];
         const panelId = `nav-group-${gi}`;
@@ -72,8 +77,9 @@ export function NavAccordion({ groups, onNavigate, wrap }: { groups: readonly Na
                       to={n.to}
                       onClick={onNavigate}
                       activeOptions={{ exact: n.to === "/" }}
+                      style={ACCENT[n.to] ? ({ "--nv": ACCENT[n.to] } as React.CSSProperties) : undefined}
                       className="nav-item flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      activeProps={{ className: "nav-item-active bg-sidebar-accent font-medium text-sidebar-accent-foreground" }}
+                      activeProps={{ className: "nav-item-active font-medium text-sidebar-accent-foreground" }}
                     >
                       <n.icon className="h-[18px] w-[18px] shrink-0" /> {n.label}
                     </Link>
