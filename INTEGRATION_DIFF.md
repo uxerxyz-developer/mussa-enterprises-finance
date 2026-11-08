@@ -1,7 +1,11 @@
-# INTEGRATION_DIFF.md — v1.6.4
+# INTEGRATION_DIFF.md — v1.6.5
 
 Reference only: every change below is already applied inside this project; nothing has to be merged by hand. See CHANGELOG.md for the version history.
 Compared with v1.0.0 (your original upload): 12 files changed, 10 new files. `src/lib/db.ts`, accounting math, voice files, transaction labels, Cheque Status, "This month" and `PrintHeader` are untouched.
+
+## P. Quick Actions colours, mic ring, tile layout (v1.6.5)
+- `styles.css`: `--qa-issue/purchase/expense` (light + dark) and the `.mic-*` ring block; `AppShell.tsx`: mic ring markup (one arc per set).
+- `TreasuryCard.tsx`: tile alignment, one-line title and note; `TreasuryViz.tsx`: `Bars` 6 -> 5.
 
 ## O. Net payments, bounced totals, Cheque Status, Treasury, mic ring (v1.6.4)
 - `db.ts`: `notBounced`, `isNetPaid` added; `entryFunds` handles net sale/purchase with a method; `workerMonth`/`workerLifetime` skip bounced.
