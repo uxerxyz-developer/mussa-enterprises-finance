@@ -4,7 +4,7 @@ import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, PageHeader, PrintHeader } from "@/components/app/inputs";
-import { accountBalance, balanceClass, fundList, liveAccounts, liveEntries, useData, ENTRY_TYPES, ACCOUNT_TYPES, type EntryType } from "@/lib/db";
+import { accountBalance, balanceClass, fundList, liveAccounts, liveEntries, notBounced, useData, ENTRY_TYPES, ACCOUNT_TYPES, type EntryType } from "@/lib/db";
 import { fmtDate, fmtPKR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -30,14 +30,14 @@ function Reports() {
   const totals = useMemo(() => {
     const m = {} as Record<EntryType, number>;
     (Object.keys(ENTRY_TYPES) as EntryType[]).forEach((k) => (m[k] = 0));
-    entries.forEach((e) => (m[e.type] += e.amount));
+    entries.filter(notBounced).forEach((e) => (m[e.type] += e.amount));
     return m;
   }, [entries]);
   const accs = liveAccounts(d).map((a) => ({ a, b: accountBalance(d, a.id) }));
   const workers = accs.filter((x) => x.a.type === "worker").map(({ a }) => ({
     a,
-    salary: entries.filter((e) => e.accountId === a.id && e.type === "salary").reduce((s, e) => s + e.amount, 0),
-    advance: entries.filter((e) => e.accountId === a.id && e.type === "advance").reduce((s, e) => s + e.amount, 0),
+    salary: entries.filter((e) => e.accountId === a.id && e.type === "salary" && notBounced(e)).reduce((s, e) => s + e.amount, 0),
+    advance: entries.filter((e) => e.accountId === a.id && e.type === "advance" && notBounced(e)).reduce((s, e) => s + e.amount, 0),
   }));
   const cls = (c: string) => accs.filter((x) => x.a.type !== "worker" && balanceClass(x.a, x.b) === c).sort((x, y) => Math.abs(y.b) - Math.abs(x.b));
   const rec = cls("Receivable");

@@ -3,7 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { ArrowDownLeft, ArrowUpRight, CheckCircle2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { fundName, liveEntries, updateEntry, useData, type ChequeStatus, type Entry } from "@/lib/db";
+import { fundName, isNetPaid, liveEntries, updateEntry, useData, type ChequeStatus, type Entry } from "@/lib/db";
+/** Money coming in: a received payment or a net sale. Everything else tracked here (issued payment, net purchase) is going out. */
+const isIncoming = (e: Entry) => e.type === "inward" || e.type === "sale";
 import { fmtDate, fmtPKR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -37,17 +39,17 @@ export function ChequeStatusCard({ hidden }: { hidden: boolean }) {
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(t); }, []);
 
   const pending = useMemo(
-    () => liveEntries(d).filter((e) => e.method === "cheque" && (e.chequeStatus ?? "pending") === "pending" && (e.type === "inward" || e.type === "outward"))
+    () => liveEntries(d).filter((e) => e.method === "cheque" && (e.chequeStatus ?? "pending") === "pending" && (e.type === "inward" || e.type === "outward" || isNetPaid(e)))
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     [d],
   );
   const name = (id?: string) => d.accounts.find((a) => a.id === id)?.name;
   const money = (v: number) => (hidden ? "Rs ••••••" : fmtPKR(v));
-  const rec = pending.filter((e) => e.type === "inward");
-  const iss = pending.filter((e) => e.type === "outward");
+  const rec = pending.filter(isIncoming);
+  const iss = pending.filter((e) => !isIncoming(e));
   const overdue = pending.filter((e) => isChequeOverdue(e, now));
-  const recLate = overdue.some((e) => e.type === "inward");
-  const issLate = overdue.some((e) => e.type === "outward");
+  const recLate = overdue.some(isIncoming);
+  const issLate = overdue.some((e) => !isIncoming(e));
   const sum = (l: Entry[]) => l.reduce((s, e) => s + e.amount, 0);
   const ordered = [...overdue, ...pending.filter((e) => !isChequeOverdue(e, now))];
 
@@ -92,7 +94,7 @@ export function ChequeStatusCard({ hidden }: { hidden: boolean }) {
           {confirm ? (
             <div className="space-y-4">
               <dl className="divide-y rounded-lg border bg-surface text-sm">
-                {([["Type", confirm.e.type === "inward" ? "Received cheque" : "Issued cheque"], ["Party", name(confirm.e.accountId) ?? "—"], ["Cheque #", confirm.e.chequeNo || "—"], ["Bank", confirm.e.bankId ? fundName(d, confirm.e.bankId) : "—"], ["Amount", fmtPKR(confirm.e.amount)]] as const).map(([k, v]) => (
+                {([["Type", isIncoming(confirm.e) ? "Received cheque" : "Issued cheque"], ["Party", name(confirm.e.accountId) ?? "—"], ["Cheque #", confirm.e.chequeNo || "—"], ["Bank", confirm.e.bankId ? fundName(d, confirm.e.bankId) : "—"], ["Amount", fmtPKR(confirm.e.amount)]] as const).map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-4 px-3 py-2"><dt className="text-muted-foreground">{k}</dt><dd className="text-right font-medium">{v}</dd></div>
                 ))}
               </dl>
@@ -106,7 +108,7 @@ export function ChequeStatusCard({ hidden }: { hidden: boolean }) {
           ) : (
             <div className="space-y-2">
               {ordered.map((e) => {
-                const r = e.type === "inward";
+                const r = isIncoming(e);
                 const late = isChequeOverdue(e, now);
                 return (
                   <div key={e.id} className={cn("rounded-lg border border-l-4 bg-card p-3", r ? "border-l-received" : "border-l-paid")}>

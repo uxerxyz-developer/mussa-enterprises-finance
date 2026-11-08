@@ -116,7 +116,7 @@ function useShortcuts() {
 function SplashScreen() {
   return (
     <div className="splash" role="status" aria-label="Loading Mussa Enterprises">
-      {Array.from({ length: 12 }, (_, i) => <div key={i} aria-hidden="true" className={`splash-orb splash-orb-${i + 1}`} />)}
+      {Array.from({ length: 7 }, (_, i) => <div key={i} aria-hidden="true" className={`splash-orb splash-orb-${i + 1}`} />)}
       <div className="splash-content">
         <img src={mussaMark} alt="" className="splash-mark" />
         <div className="splash-title">Mussa Enterprises</div>
@@ -683,11 +683,10 @@ function MicButton() {
 
   return (
     <>
-      <button type="button" data-voice-trigger aria-label="Voice assistant" title="Voice assistant" aria-pressed={open} onClick={() => (open ? close() : openDock())} className={isConnected ? "mic-btn mic-btn-active" : "mic-btn"}>
+      <button type="button" data-voice-trigger aria-label="Voice assistant" title="Voice assistant" aria-pressed={open} data-open={open ? "true" : "false"} onClick={() => (open ? close() : openDock())} className={isConnected ? "mic-btn mic-btn-active" : "mic-btn"}>
         <span className="mic-mesh" aria-hidden="true">
-          <span className="mic-blob mic-blob-purple" />
-          <span className="mic-blob mic-blob-blue" />
-          <span className="mic-blob mic-blob-yellow" />
+          <span className="mic-ringset"><span className="mic-arc mic-arc-1" /><span className="mic-arc mic-arc-2" /><span className="mic-arc mic-arc-3" /></span>
+          <span className="mic-glowset"><span className="mic-ringset"><span className="mic-arc mic-arc-1" /><span className="mic-arc mic-arc-2" /><span className="mic-arc mic-arc-3" /></span></span>
         </span>
         <span className="mic-art" aria-hidden="true">
           <img src={micLightIdle.url} alt="" className="mic-image mic-image-light" />

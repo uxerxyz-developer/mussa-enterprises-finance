@@ -4,7 +4,7 @@
  * using the same rules as the entry form. No browser APIs here, so it can be tested in isolation.
  */
 import {
-  ENTRY_TYPES, METHODS, accountBalance, accountTypeLabel, balanceClass, fundList, liveAccounts, liveBanks, liveEntries, liveProduction,
+  ENTRY_TYPES, METHODS, accountBalance, accountTypeLabel, balanceClass, fundList, liveAccounts, liveBanks, liveEntries, liveProduction, notBounced,
   partyTotals, stockSummary, workerMonth, workerTotals,
   type Account, type AccountType, type Data, type Entry, type EntryType, type PayMethod,
 } from "./db";
@@ -276,7 +276,7 @@ export function searchEntriesTool(d: Data, a: Args, today: string): ToolResult {
   if (text) rows = rows.filter((e) => `${e.particulars ?? ""} ${e.remarks ?? ""} ${e.voucherNo}`.toLowerCase().includes(text));
   rows = [...rows].sort(byNewest);
   const limit = Math.min(25, Math.max(1, Math.round(num(a["limit"]) ?? 8)));
-  return { status: "ok", account: accName, resolved_date: hasDateArg(a) ? resolveDate(a, today) : undefined, count: rows.length, total_amount: rows.reduce((s, e) => s + e.amount, 0), entries: rows.slice(0, limit).map((e) => entryRow(d, e)) };
+  return { status: "ok", account: accName, resolved_date: hasDateArg(a) ? resolveDate(a, today) : undefined, count: rows.length, total_amount: rows.filter(notBounced).reduce((s, e) => s + e.amount, 0), entries: rows.slice(0, limit).map((e) => entryRow(d, e)) };
 }
 
 export function accountBalanceTool(d: Data, a: Args): ToolResult {
@@ -288,7 +288,7 @@ export function accountBalanceTool(d: Data, a: Args): ToolResult {
 export function overviewTool(d: Data, today: string): ToolResult {
   const month = today.slice(0, 7);
   const live = liveEntries(d).filter((e) => e.date.startsWith(month));
-  const sum = (t: EntryType) => live.filter((e) => e.type === t).reduce((s, e) => s + e.amount, 0);
+  const sum = (t: EntryType) => live.filter((e) => e.type === t && notBounced(e)).reduce((s, e) => s + e.amount, 0);
   const p = partyTotals(d);
   return {
     status: "ok", today, funds: fundList(d).map((f) => ({ name: f.name, balance: f.closing })),
@@ -306,8 +306,8 @@ export function reportTool(d: Data, a: Args, today: string): ToolResult {
   const inRange = (e: { date: string }) => e.date >= from && e.date <= to;
   const group = (rows: Entry[], key: (e: Entry) => string) => { const m = new Map<string, number>(); rows.forEach((e) => m.set(key(e), (m.get(key(e)) ?? 0) + e.amount)); return [...m].sort((x, y) => y[1] - x[1]).slice(0, 10).map(([k, v]) => ({ name: k, total: v })); };
   const acc = (e: Entry) => d.accounts.find((x) => x.id === e.accountId)?.name ?? "—";
-  if (rep === "sales" || rep === "purchases") { const rows = liveEntries(d).filter((e) => e.type === (rep === "sales" ? "sale" : "purchase") && inRange(e)); return { status: "ok", report: rep, from, to, count: rows.length, total: rows.reduce((s, e) => s + e.amount, 0), total_kg: rows.reduce((s, e) => s + (e.weightKg ?? 0), 0), top_accounts: group(rows, acc) }; }
-  if (rep === "expenses") { const rows = liveEntries(d).filter((e) => e.type === "expense" && inRange(e)); return { status: "ok", report: rep, from, to, count: rows.length, total: rows.reduce((s, e) => s + e.amount, 0), by_category: group(rows, (e) => d.categories.find((c) => c.id === e.categoryId)?.name ?? "Other") }; }
+  if (rep === "sales" || rep === "purchases") { const rows = liveEntries(d).filter((e) => e.type === (rep === "sales" ? "sale" : "purchase") && inRange(e)); return { status: "ok", report: rep, from, to, count: rows.length, total: rows.filter(notBounced).reduce((s, e) => s + e.amount, 0), total_kg: rows.reduce((s, e) => s + (e.weightKg ?? 0), 0), top_accounts: group(rows, acc) }; }
+  if (rep === "expenses") { const rows = liveEntries(d).filter((e) => e.type === "expense" && inRange(e)); return { status: "ok", report: rep, from, to, count: rows.length, total: rows.filter(notBounced).reduce((s, e) => s + e.amount, 0), by_category: group(rows, (e) => d.categories.find((c) => c.id === e.categoryId)?.name ?? "Other") }; }
   if (rep === "stock") return { status: "ok", report: rep, stock: stockSummary(d).map((r) => ({ material: r.name, stock_kg: Math.round(r.stock), purchased_kg: Math.round(r.purchased), sold_kg: Math.round(r.sold), produced_kg: Math.round(r.produced) })) };
   if (rep === "heats") { const rows = liveProduction(d).filter(inRange); return { status: "ok", report: rep, from, to, heats: rows.length, total_output_kg: Math.round(rows.reduce((s, p) => s + p.totalKg, 0)), recent: [...rows].sort((x, y) => y.date.localeCompare(x.date)).slice(0, 5).map((p) => ({ date: p.date, output_kg: Math.round(p.totalKg), input_kg: Math.round(p.inputKg ?? p.totalKg) })) }; }
   if (rep === "cheques") { const rows = liveEntries(d).filter((e) => !!e.chequeStatus); return { status: "ok", report: rep, pending: rows.filter((e) => e.chequeStatus === "pending").map((e) => entryRow(d, e)).slice(0, 10), pending_count: rows.filter((e) => e.chequeStatus === "pending").length }; }

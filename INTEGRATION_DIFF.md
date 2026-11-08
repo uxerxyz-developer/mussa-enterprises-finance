@@ -1,7 +1,18 @@
-# INTEGRATION_DIFF.md — v1.6.2
+# INTEGRATION_DIFF.md — v1.6.4
 
 Reference only: every change below is already applied inside this project; nothing has to be merged by hand. See CHANGELOG.md for the version history.
 Compared with v1.0.0 (your original upload): 12 files changed, 10 new files. `src/lib/db.ts`, accounting math, voice files, transaction labels, Cheque Status, "This month" and `PrintHeader` are untouched.
+
+## O. Net payments, bounced totals, Cheque Status, Treasury, mic ring (v1.6.4)
+- `db.ts`: `notBounced`, `isNetPaid` added; `entryFunds` handles net sale/purchase with a method; `workerMonth`/`workerLifetime` skip bounced.
+- Totals now skip bounced in: `reports.tsx`, `index.tsx`, `EntriesTable.tsx`, `BusinessEntries.tsx`, `expenses.tsx`, `voice-tools.ts`.
+- `ChequeStatusCard.tsx`: includes net trades. `TreasuryCard.tsx` (tile layout) and `TreasuryViz.tsx` (`softSeries`, line arrow).
+- `AppShell.tsx` mic markup + `styles.css` mic ring block (replaces `.mic-mesh/.mic-blob`, removes the pulse ring). `__tests__/netsale.test.ts`.
+
+## N. Colours, voice glow, Treasury polish (v1.6.3)
+- `styles.css`: `--qa-purchase/expense/issue` (light + dark), one `.dark .qa-tile[data-qid]` rule, splash orb block (7 elements, vmax), `--tre-orb-*` tokens and the two `.treasury-surface` gradients, `.tre-chip` size, ring track.
+- `GeminiLiveWorkspaceBar.css`: `.voice-aura` block and `aura-rise` keyframes only.
+- `TreasuryCard.tsx`: tile sizes and layout; `TreasuryViz.tsx`: `Ring` only. `AppShell.tsx`: orb count 12 -> 7. `public/icon-maskable-512.png`.
 
 ## M. Launch screens (v1.6.2)
 - `public/icon-*.png`, `apple-touch-icon.png`: regenerated artwork; `manifest.webmanifest`: `background_color` only.

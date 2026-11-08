@@ -217,10 +217,10 @@
   --entry-card: oklch(0.53 0.1 215);
   --entry-card-soft: oklch(0.96 0.025 215);
   --qa-receive: oklch(0.62 0.14 160);
-  --qa-issue: oklch(0.55 0.2 18);
+  --qa-issue: oklch(0.62 0.2 38);
   --qa-sale: oklch(0.62 0.13 215);
-  --qa-purchase: oklch(0.64 0.14 72);
-  --qa-expense: oklch(0.55 0.12 38);
+  --qa-purchase: oklch(0.847 0.152 81);
+  --qa-expense: oklch(0.554 0.196 19.5);
   --qa-account: oklch(0.58 0.17 295);
   --qa-heat: oklch(0.6 0.18 25);
   --admin-card: oklch(0.5 0.13 350);
@@ -272,10 +272,10 @@
   --entry-card: oklch(0.72 0.09 215);
   --entry-card-soft: oklch(0.28 0.04 215);
   --qa-receive: oklch(0.76 0.14 160);
-  --qa-issue: oklch(0.7 0.17 20);
+  --qa-issue: oklch(0.74 0.17 40);
   --qa-sale: oklch(0.74 0.12 215);
-  --qa-purchase: oklch(0.8 0.14 78);
-  --qa-expense: oklch(0.68 0.12 38);
+  --qa-purchase: oklch(0.87 0.155 81);
+  --qa-expense: oklch(0.70 0.18 19.5);
   --qa-account: oklch(0.72 0.15 295);
   --qa-heat: oklch(0.74 0.16 25);
   --admin-card: oklch(0.69 0.12 350);
@@ -504,20 +504,15 @@
   /* Standard loading screen: fixed palette, deliberately independent of the light/dark app theme. */
   --splash-bg: #D8DBE8; --splash-text: #1F2A3D;
   position: fixed; inset: 0; overflow: hidden; display: grid; place-items: center; background: var(--splash-bg); animation: splash-in 0.4s ease-out; }
-.splash-orb { --x: 50%; --y: 50%; --s: 50vw; --c: #fff; --a: 0.8; position: absolute; border-radius: 9999px; width: var(--s); height: var(--s); left: calc(var(--x) - var(--s) / 2); top: calc(var(--y) - var(--s) / 2); will-change: transform;
+.splash-orb { --x: 50%; --y: 50%; --s: 50vmax; --c: #fff; --a: 0.8; position: absolute; border-radius: 9999px; width: var(--s); height: var(--s); left: calc(var(--x) - var(--s) / 2); top: calc(var(--y) - var(--s) / 2); will-change: transform;
   background: radial-gradient(closest-side, color-mix(in srgb, var(--c) calc(var(--a) * 100%), transparent), color-mix(in srgb, var(--c) calc(var(--a) * 45%), transparent) 45%, transparent 100%); }
-.splash-orb-1 { --x: 14%; --y: 8%; --s: 81vw; --c: #F7BE92; --a: 0.95; animation: orb-d 13s ease-in-out infinite alternate; }
-.splash-orb-2 { --x: 74%; --y: 17%; --s: 59vw; --c: #5C90D2; --a: 0.85; animation: orb-e 16s ease-in-out infinite alternate; }
-.splash-orb-3 { --x: 46%; --y: 3%; --s: 43vw; --c: #F7BE92; --a: 0.55; animation: orb-f 10s ease-in-out infinite alternate; }
-.splash-orb-4 { --x: 94%; --y: 40%; --s: 59vw; --c: #F7BE92; --a: 0.95; animation: orb-e 13s ease-in-out infinite alternate; }
-.splash-orb-5 { --x: 4%; --y: 50%; --s: 54vw; --c: #5C90D2; --a: 0.8; animation: orb-f 16s ease-in-out infinite alternate; }
-.splash-orb-6 { --x: 36%; --y: 37%; --s: 35vw; --c: #5C90D2; --a: 0.45; animation: orb-d 10s ease-in-out infinite alternate; }
-.splash-orb-7 { --x: 66%; --y: 54%; --s: 38vw; --c: #F7BE92; --a: 0.55; animation: orb-f 13s ease-in-out infinite alternate; }
-.splash-orb-8 { --x: 50%; --y: 46%; --s: 40vw; --c: #F6F2F4; --a: 0.8; }
-.splash-orb-9 { --x: 22%; --y: 80%; --s: 59vw; --c: #EA5F55; --a: 0.85; animation: orb-d 10s ease-in-out infinite alternate; }
-.splash-orb-10 { --x: 80%; --y: 84%; --s: 65vw; --c: #5C90D2; --a: 0.75; animation: orb-e 13s ease-in-out infinite alternate; }
-.splash-orb-11 { --x: 55%; --y: 97%; --s: 81vw; --c: #BBD2EA; --a: 0.95; animation: orb-f 16s ease-in-out infinite alternate; }
-.splash-orb-12 { --x: 50%; --y: 70%; --s: 49vw; --c: #BBD2EA; --a: 0.8; animation: orb-d 10s ease-in-out infinite alternate; }
+.splash-orb-1 { --x: 16%; --y: 12%; --s: 62vmax; --c: #F7BE92; --a: 0.9; animation: orb-d 14s ease-in-out infinite alternate; }
+.splash-orb-2 { --x: 82%; --y: 22%; --s: 52vmax; --c: #5C90D2; --a: 0.8; animation: orb-e 17s ease-in-out infinite alternate; }
+.splash-orb-3 { --x: 92%; --y: 58%; --s: 50vmax; --c: #F7BE92; --a: 0.85; animation: orb-f 13s ease-in-out infinite alternate; }
+.splash-orb-4 { --x: 14%; --y: 82%; --s: 52vmax; --c: #EA5F55; --a: 0.8; animation: orb-d 15s ease-in-out infinite alternate; }
+.splash-orb-5 { --x: 80%; --y: 88%; --s: 56vmax; --c: #5C90D2; --a: 0.7; animation: orb-e 12s ease-in-out infinite alternate; }
+.splash-orb-6 { --x: 50%; --y: 98%; --s: 70vmax; --c: #BBD2EA; --a: 0.9; animation: orb-f 16s ease-in-out infinite alternate; }
+.splash-orb-7 { --x: 50%; --y: 46%; --s: 34vmax; --c: #F6F2F4; --a: 0.8; }
 .splash-content { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; animation: splash-rise 0.7s cubic-bezier(.2,.8,.2,1) both; }
 .splash-mark { width: clamp(3.25rem, 14vw, 4.5rem); height: auto; object-fit: contain; animation: splash-breathe 2.4s ease-in-out infinite; filter: drop-shadow(0 6px 14px oklch(0 0 0 / 0.15)); }
 .splash-title { font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; color: var(--splash-text); opacity: 0.8; }
@@ -545,7 +540,6 @@
 .dark .mic-image-light { display: none; }
 .dark .mic-image-dark { display: block; }
 .mic-idle { visibility: hidden; }
-.mic-btn-active::after { content: ""; position: absolute; inset: -3px; border-radius: 9999px; border: 2px solid color-mix(in oklab, var(--mic-live) 60%, transparent); animation: mic-pulse 1.6s ease-out infinite; pointer-events: none; }
 .mic-live-dot { position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; border-radius: 9999px; background: var(--mic-live); animation: mic-blink 1.2s ease-in-out infinite; }
 .mic-chip { align-items: center; gap: 0.35rem; border-radius: 9999px; border: 1px solid color-mix(in oklab, var(--mic-live) 40%, transparent); background: color-mix(in oklab, var(--mic-live) 10%, transparent); padding: 0.2rem 0.65rem; font-size: 0.7rem; font-weight: 500; color: var(--mic-chip-text); }
 @keyframes mic-pulse { 0% { transform: scale(0.85); opacity: 0.9; } 70% { transform: scale(1.3); opacity: 0; } 100% { transform: scale(1.3); opacity: 0; } }
@@ -558,13 +552,22 @@
 .mic-btn { cursor: pointer; border: none; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .mic-btn:hover { transform: scale(1.06); }
 .mic-btn:active { transform: scale(0.94); }
-.mic-mesh { position: absolute; inset: -4px; border-radius: 9999px; overflow: hidden; pointer-events: none; filter: blur(5px); opacity: 0.45; z-index: 0; }
-.mic-blob { position: absolute; border-radius: 50%; mix-blend-mode: hard-light; animation: mic-fluid 6s ease-in-out infinite alternate; }
-.mic-blob-purple { width: 140%; height: 140%; top: -20%; left: -20%; background: radial-gradient(circle, var(--mic-purple) 20%, transparent 70%); animation-duration: 7s; }
-.mic-blob-blue { width: 130%; height: 130%; bottom: -20%; right: -20%; background: radial-gradient(circle, var(--mic-blue) 25%, transparent 70%); animation-duration: 5s; animation-delay: -2s; }
-.mic-blob-yellow { width: 110%; height: 110%; top: 10%; right: -10%; background: radial-gradient(circle, var(--mic-yellow) 20%, transparent 65%); animation-duration: 6s; animation-delay: -4s; }
-@keyframes mic-fluid { 0% { transform: translate(0,0) scale(1) rotate(0deg); } 50% { transform: translate(15%,-12%) scale(1.15) rotate(180deg); } 100% { transform: translate(-10%,15%) scale(0.95) rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .mic-blob { animation: none; } }
+/* Voice button: a soft circulating ring of colour around the icon. Three arcs (red-magenta, yellow-green, cyan-blue) turn at different speeds and directions, so the colours drift past each other instead of moving as one fixed gradient. Only transforms animate. */
+:root { --mic-r1: oklch(0.64 0.22 25); --mic-r2: oklch(0.6 0.24 340); --mic-y1: oklch(0.8 0.17 80); --mic-y2: oklch(0.68 0.18 150); --mic-c1: oklch(0.7 0.13 205); --mic-c2: oklch(0.55 0.21 270); }
+.dark { --mic-r1: oklch(0.72 0.21 25); --mic-r2: oklch(0.7 0.24 340); --mic-y1: oklch(0.88 0.17 95); --mic-y2: oklch(0.8 0.19 150); --mic-c1: oklch(0.82 0.13 205); --mic-c2: oklch(0.68 0.2 270); }
+.mic-mesh { position: absolute; inset: -4px; z-index: 0; border-radius: 9999px; pointer-events: none; transition: opacity 0.4s ease; }
+.mic-btn[data-open="true"] .mic-mesh { opacity: 0.45; }
+.mic-ringset { position: absolute; inset: 0; border-radius: 9999px;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.6px), #000 calc(100% - 2.6px), #000 calc(100% - 1.2px), transparent calc(100% - 0.2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3.6px), #000 calc(100% - 2.6px), #000 calc(100% - 1.2px), transparent calc(100% - 0.2px)); }
+.mic-glowset { position: absolute; inset: 0; filter: blur(3.5px); opacity: 0.65; }
+.mic-arc { position: absolute; inset: 0; border-radius: 9999px; will-change: transform; }
+.mic-arc-1 { background: conic-gradient(from 0deg, transparent 0deg, var(--mic-r1) 60deg, var(--mic-r2) 125deg, transparent 195deg); animation: mic-spin 9s linear infinite; }
+.mic-arc-2 { background: conic-gradient(from 120deg, transparent 0deg, var(--mic-y1) 55deg, var(--mic-y2) 120deg, transparent 190deg); animation: mic-spin 13s linear infinite reverse; }
+.mic-arc-3 { background: conic-gradient(from 240deg, transparent 0deg, var(--mic-c1) 60deg, var(--mic-c2) 130deg, transparent 200deg); animation: mic-spin 17s linear infinite; }
+.dark .mic-arc { mix-blend-mode: screen; }
+@keyframes mic-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .mic-arc { animation: none; } }
 
 /* ---- Sidebar categories (collapsible) and page-sheet corners ---- */
 .nav-collapse { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .24s ease; }
@@ -1029,6 +1032,8 @@ html[data-vt]::view-transition-group(theme-line) { z-index: 2; }
   height: 58%; border-radius: 1rem 1rem 1.25rem 1.25rem;
   box-shadow: 0 1px 0 var(--qa-rim), 0 8px 12px -10px color-mix(in oklab, var(--foreground) 40%, transparent);
 }
+/* Dark theme: Purchase and Expense get a larger share of their own colour, so they stay crisp instead of turning brown against the dark card. */
+.dark .qa-tile[data-qid="purchase"], .dark .qa-tile[data-qid="expense"] { --qa-l: 38%; --qa-r: 80%; --qa-tl: 52%; --qa-tr: 85%; --qa-bl: 22%; --qa-br: 46%; }
 .qa-tile:active { scale: .96; translate: 0 1px; transition-duration: .06s; filter: saturate(1.1) brightness(.97); box-shadow: inset 0 3px 10px -3px color-mix(in oklab, var(--qa) 60%, transparent); }
 .qa-tile[data-pulse="true"] { animation: qa-pop .45s cubic-bezier(.34,1.56,.64,1); }
 @keyframes qa-pop { 0% { scale: .96; } 55% { scale: 1.03; } 100% { scale: 1; } }
@@ -1051,30 +1056,37 @@ html[data-vt]::view-transition-group(theme-line) { z-index: 2; }
   --tre-tile-bg: oklch(1 0 0 / 0.8);
   --tre-tile-border: oklch(0.91 0.012 250);
   --tre-tile-shadow: 0 8px 18px -12px oklch(0.4 0.06 255 / 0.35);
-  --tre-orb-a: 34%;
-  --tre-orb-b: 27%;
+  /* corner glow: soft pastel in the light theme, brighter in the dark theme */
+  --tre-orb-cash: oklch(0.84 0.11 163);
+  --tre-orb-bank: oklch(0.82 0.10 232);
+  --tre-orb-recv: oklch(0.88 0.13 84);
+  --tre-orb-a: 46%;
+  --tre-orb-b: 36%;
 }
 .dark {
   --tre-tile-bg: color-mix(in oklab, var(--treasury-foreground) 8%, transparent);
   --tre-tile-border: color-mix(in oklab, var(--treasury-foreground) 15%, transparent);
   --tre-tile-shadow: none;
+  --tre-orb-cash: oklch(0.72 0.19 163);
+  --tre-orb-bank: oklch(0.70 0.17 232);
+  --tre-orb-recv: oklch(0.80 0.18 84);
   --tre-orb-a: 42%;
   --tre-orb-b: 33%;
 }
 .treasury-surface {
   color: var(--treasury-foreground);
   background:
-    radial-gradient(46% 42% at 98% 6%, color-mix(in oklab, var(--tre-recv) var(--tre-orb-a), transparent), transparent 72%),
-    radial-gradient(52% 46% at 78% 18%, color-mix(in oklab, var(--tre-cash) var(--tre-orb-a), transparent), transparent 74%),
-    radial-gradient(52% 40% at 52% 8%, color-mix(in oklab, var(--tre-bank) var(--tre-orb-b), transparent), transparent 74%),
+    radial-gradient(46% 42% at 98% 6%, color-mix(in oklab, var(--tre-orb-recv) var(--tre-orb-a), transparent), transparent 72%),
+    radial-gradient(52% 46% at 78% 18%, color-mix(in oklab, var(--tre-orb-cash) var(--tre-orb-a), transparent), transparent 74%),
+    radial-gradient(52% 40% at 52% 8%, color-mix(in oklab, var(--tre-orb-bank) var(--tre-orb-b), transparent), transparent 74%),
     linear-gradient(180deg, var(--tre-base-a), var(--tre-base-b));
   box-shadow: 0 0 0 1px var(--tre-tile-border), inset 0 1px 0 color-mix(in oklab, var(--treasury-foreground) 10%, transparent);
 }
 .dark .treasury-surface {
   background:
-    radial-gradient(46% 42% at 98% 6%, color-mix(in oklab, var(--tre-recv) var(--tre-orb-a), transparent), transparent 72%),
-    radial-gradient(52% 46% at 78% 18%, color-mix(in oklab, var(--tre-cash) var(--tre-orb-a), transparent), transparent 74%),
-    radial-gradient(52% 40% at 52% 8%, color-mix(in oklab, var(--tre-bank) var(--tre-orb-b), transparent), transparent 74%),
+    radial-gradient(46% 42% at 98% 6%, color-mix(in oklab, var(--tre-orb-recv) var(--tre-orb-a), transparent), transparent 72%),
+    radial-gradient(52% 46% at 78% 18%, color-mix(in oklab, var(--tre-orb-cash) var(--tre-orb-a), transparent), transparent 74%),
+    radial-gradient(52% 40% at 52% 8%, color-mix(in oklab, var(--tre-orb-bank) var(--tre-orb-b), transparent), transparent 74%),
     linear-gradient(160deg, var(--tre-1), var(--tre-2));
 }
 .tre-tile {
@@ -1084,10 +1096,10 @@ html[data-vt]::view-transition-group(theme-line) { z-index: 2; }
 }
 .tre-tile:hover { filter: brightness(1.04); }
 .tre-tile:active { scale: .965; transition-duration: .06s; filter: brightness(.97); }
-.tre-chip { display: inline-grid; place-items: center; width: 16px; height: 16px; flex-shrink: 0; border-radius: 5px; color: var(--tre-chip-fg); }
+.tre-chip { display: inline-grid; place-items: center; width: 22px; height: 22px; flex-shrink: 0; border-radius: 7px; color: var(--tre-chip-fg); }
 .tre-chip-cash { background: var(--tre-cash); } .tre-chip-bank { background: var(--tre-bank); } .tre-chip-receivable { background: var(--tre-recv); }
 .tre-chip-payable { background: var(--tre-pay); } .tre-chip-cheques { background: var(--tre-chq); }
-.tre-ring-track { stroke: color-mix(in oklab, var(--treasury-foreground) 14%, transparent); }
+.tre-ring-track { stroke: color-mix(in oklab, var(--treasury-foreground) 10%, transparent); }
 .tre-ring-seg { animation: tre-ring-in .9s cubic-bezier(.2,.8,.2,1) backwards; }
 @keyframes tre-ring-in { from { stroke-dasharray: 0 100; } }
 .tre-draw { stroke-dasharray: 1; animation: tre-draw 1s ease-out backwards; }
