@@ -1,9 +1,17 @@
 # CHANGELOG — Mussa Finance
 
-Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.5.zip`), in this file, and inside the app under **Settings & Backup → App version**.
+Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.6.zip`), in this file, and inside the app under **Settings & Backup → App version**.
 When something is wrong, tell me: **the version shown in Settings + the screen + what you did + a screenshot**. I will look only at the files listed for that version.
 
-## v1.6.5 — Quick Actions colours, mic ring, Treasury tile layout (current)
+## v1.6.6 — App-like feel, richer sidebar, wrong-PIN feedback, in-app sounds (current)
+- **App-like feel** (`styles.css`, `__root.tsx`): no text selection, no tap flash, no long-press callouts, no pull-to-refresh, no double-tap zoom (pinch zoom stays), no browser context menu or image/link dragging, no text cursor over plain text. Still allowed: inside entry fields (select, copy/paste, right-click) and on items marked `select-text`: the voice transcript, voucher numbers and contact numbers.
+- **Sidebar and mobile menu** (`styles.css`, `SidebarNav.tsx`, `AppShell.tsx`): the base colour of each palette now carries a soft vertical gradient plus two faint violet and sky tints (derived with `color-mix`, so every palette and both themes follow). The selected item uses its module colour (Heat, Sales, Purchases, Accounts, Expenses, Cash Book, Cash & Banks; the rest the brand violet): gradient pill, thin outline, coloured icon and a sliding side bar in the same colour. The glow is tight (about 8px, not 16-20px). Hover is a light tint. Group titles are brighter.
+- **Wrong PIN feedback** (`field-error.ts`, login, PIN confirmation dialog, admin reset PIN): vibration, a short sideways shake, a red outline on the PIN field and an error sound; the login PIN clears for the next try.
+- **Sounds** (new `lib/sounds.ts`, synthesised with Web Audio, no files): voice dock opens/closes and the mic button toggles (rising/falling chime), errors and invalid fields (low double beep), entry saved (soft tick), a cheque newly becoming due while the app is open (gentle ping). `Settings` has a Sounds switch (kept on this device).
+- Nothing in `db.ts` or accounting changed.
+- `src/lib/version.ts`: 1.6.6.
+
+## v1.6.5 — Quick Actions colours, mic ring, Treasury tile layout
 - **Quick Actions** (`styles.css`, `--qa-*` only): Issue Payment is back to its earlier crimson; Expense takes the orange-red Issue had in v1.6.3/1.6.4; Purchase is back on its real amber (hue about 68-70), richer than the pale yellow of v1.6.4 (the dark theme keeps the bigger own-colour share for Purchase and Expense).
 - **Voice button ring**: smaller and sized to the visible mic circle (no empty gap), one unbroken full-colour ring that turns clockwise at one steady speed (6 s); the three fading arcs are gone. It still dims to about 45% while the dock is open. `AppShell.tsx` markup and the `.mic-*` block in `styles.css`.
 - **Treasury small tiles** (`TreasuryCard.tsx`): icon, title and amount sit lower in the tile; graphics stay top-right; titles (including "Pending cheques") and the cheque note are a single line. The Receivables graphic now has 5 bars instead of 6 (`TreasuryViz.tsx` `Bars`).

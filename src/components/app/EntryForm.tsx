@@ -13,6 +13,7 @@ import {
 } from "@/lib/db";
 import { todayISO, amountInWords, fmtTon } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { playSound } from "@/lib/sounds";
 import { ConfirmSave, type ConfirmRow } from "./ConfirmSave";
 
 const DRAFT = "cashbook-entry-draft";
@@ -145,6 +146,7 @@ export function EntryForm({ initial, onSaved, defaultType = "inward", defaultAcc
         });
         toast.success(`Saved · V-${e.voucherNo} + payment V-${p.voucherNo}`);
       } else toast.success(`Saved · Voucher V-${e.voucherNo}`);
+      playSound("saved");
       reset();
       localStorage.removeItem(DRAFT);
       onSaved?.(e);

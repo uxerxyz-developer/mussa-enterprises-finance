@@ -61,7 +61,7 @@ function Vouchers() {
             <Link key={e.id} to="/voucher/$id" params={{ id: e.id }} className={cn("flex items-center justify-between gap-3 rounded-lg border border-l-[5px] bg-card p-3 shadow-sm", BAR[e.type] ?? "border-l-primary")}>
               <div className="min-w-0">
                 <div className="truncate font-semibold">{party ?? ENTRY_TYPES[e.type].label}</div>
-                <div className="truncate text-xs text-muted-foreground">V-{e.voucherNo} · {e.type === "inward" ? "Received" : e.type === "outward" ? "Issued" : ENTRY_TYPES[e.type].label} · {fmtDate(e.date)}</div>
+                <div className="select-text truncate text-xs text-muted-foreground">V-{e.voucherNo} · {e.type === "inward" ? "Received" : e.type === "outward" ? "Issued" : ENTRY_TYPES[e.type].label} · {fmtDate(e.date)}</div>
               </div>
               <div className={cn("num shrink-0 text-sm font-semibold", flow === "in" && "text-success", flow === "out" && "text-destructive", e.type === "sale" && "text-sale", e.type === "purchase" && "text-purchase")}>{fmtPKR(e.amount)}</div>
             </Link>

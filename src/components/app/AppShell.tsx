@@ -28,6 +28,8 @@ import { VoiceSetupCard, VoiceSettingsSheet } from "./voice/VoiceSettings";
 import { AppearancePanel } from "./AppearancePanel";
 import { WorkerPaymentFix } from "./WorkerPaymentFix";
 import { applyAppearance } from "@/lib/appearance";
+import { fieldError } from "@/lib/field-error";
+import { playSound } from "@/lib/sounds";
 import { switchThemeAnimated } from "@/lib/theme-transition";
 import { flushSync } from "react-dom";
 import { flashEntry } from "@/lib/row-flash";
@@ -238,7 +240,7 @@ function Shell({ onLogout, dark, onToggleTheme }: { onLogout: (full?: boolean) =
       <WorkerPaymentFix />
       {appearanceOpen && <AppearancePanel onClose={() => setAppearanceOpen(false)} theme={dark ? "dark" : "light"} />}
       {/* Desktop sidebar (reference layout) */}
-      <aside className="no-print sticky top-0 hidden h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
+      <aside className="side-surface no-print sticky top-0 hidden h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
         <div className="border-b border-sidebar-border"><UserBlock dark={dark} onToggleTheme={onToggleTheme} onLogout={onLogout} /></div>
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-3"><NavAccordion groups={NAV_GROUPS} /></nav>
         <div className="space-y-2 border-t border-sidebar-border p-4 text-xs text-sidebar-foreground/70">
@@ -258,7 +260,7 @@ function Shell({ onLogout, dark, onToggleTheme }: { onLogout: (full?: boolean) =
                 <SheetTrigger asChild>
                   <button aria-label="Menu" className="shrink-0 p-1.5 text-foreground md:hidden"><Menu className="h-5 w-5" /></button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-72 bg-sidebar p-0 text-sidebar-foreground">
+                <SheetContent side="left" className="side-surface w-72 bg-sidebar p-0 text-sidebar-foreground">
                   <SheetHeader className="border-b border-sidebar-border p-0 text-left"><SheetTitle className="sr-only">Menu</SheetTitle><UserBlock dark={dark} onToggleTheme={onToggleTheme} onLogout={onLogout} /></SheetHeader>
                   <div className="space-y-1 overflow-y-auto p-3" style={{ maxHeight: "calc(100vh - 5rem)" }}>
                     <NavAccordion groups={NAV_GROUPS} wrap={(link, key) => <SheetClose asChild key={key}>{link}</SheetClose>} />
@@ -452,7 +454,7 @@ function Login({ firstRun: needsSetup, onDone, requireUsername }: { firstRun: bo
       await setupAuth(username.trim(), pw, company.trim(), recovery.includes("@") ? recovery : "", recovery.includes("@") ? "" : recovery);
       onDone();
     } else if (await checkPw(pw, needUser ? username : undefined)) onDone();
-    else toast.error(needUser ? "Wrong username or PIN" : "Wrong PIN");
+    else { fieldError("login-pin", needUser ? "Wrong username or PIN" : "Wrong PIN"); setPw(""); }
     setBusy(false);
   };
 
@@ -510,7 +512,7 @@ function Login({ firstRun: needsSetup, onDone, requireUsername }: { firstRun: bo
           )}
           {(firstRun || forgot) && <Field label="Recovery Email or Phone"><Input value={recovery} onChange={(e) => setRecovery(e.target.value)} /></Field>}
           <Field label={forgot ? "New PIN" : "PIN"}>
-            <Input autoFocus={!needUser} type="password" inputMode="numeric" value={pw} onChange={(e) => setPw(e.target.value.replace(/\D/g, "").slice(0, 8))} />
+            <Input id="login-pin" autoFocus={!needUser} type="password" inputMode="numeric" value={pw} onChange={(e) => setPw(e.target.value.replace(/\D/g, "").slice(0, 8))} />
           </Field>
           {(firstRun || forgot) && (
             <Field label="Confirm PIN">
@@ -648,10 +650,11 @@ function MicButton() {
   };
 
   // Closing ends the session and clears the conversation, but an unfinished draft is kept for 10 minutes.
-  const close = () => { stopSession(); setResumeAsk(false); setOpen(false); };
-  const toggle = () => { if (showSetup) return; if (isConnected) stopSession(); else void startSession(); };
+  const close = () => { stopSession(); setResumeAsk(false); setOpen(false); playSound("micOff"); };
+  const toggle = () => { if (showSetup) return; if (isConnected) { stopSession(); playSound("micOff"); } else { playSound("micOn"); void startSession(); } };
   const openDock = () => {
     setOpen(true);
+    playSound("micOn");
     if (!voice.configured) return;
     const fresh = !!currentDraft && Date.now() - draftAtRef.current < 600_000;
     if (currentDraft && !fresh) setCurrentDraft(null);

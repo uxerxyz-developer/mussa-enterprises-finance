@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { Download, RotateCcw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { playSound, setSoundsEnabled, soundsEnabled } from "@/lib/sounds";
 import { Field, PageHeader, TitleInput } from "@/components/app/inputs";
 import { CloudBackup } from "@/components/app/CloudBackup";
 import { changePassword, checkPw, exportJSON, getSnapshots, importJSON, restoreSnapshot, takeSnapshot, updateCompany, updateRecovery, useData, type Snapshot } from "@/lib/db";
@@ -32,6 +34,7 @@ function SettingsPage() {
   const [recoveryEmail, setRecoveryEmail] = useState(d.auth?.recoveryEmail ?? "");
   const [recoveryPhone, setRecoveryPhone] = useState(d.auth?.recoveryPhone ?? "");
   const [snaps, setSnaps] = useState<Snapshot[]>([]);
+  const [sounds, setSounds] = useState(soundsEnabled);
   const file = useRef<HTMLInputElement>(null);
   useEffect(() => setSnaps(getSnapshots()), [d]);
 
@@ -42,6 +45,13 @@ function SettingsPage() {
       <Link to="/opening" className="mb-4 flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm hover:border-primary/40"><span><span className="font-semibold">Opening Balances</span> — cash, banks, parties, stock, loans and opening capital</span><span className="text-primary">Open →</span></Link>
       <div className="grid gap-6 lg:grid-cols-2">
         <CloudBackup />
+        <div className="flex items-center justify-between gap-4 rounded-lg border bg-card p-5">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Sounds</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Short tones for the voice button, errors, saved entries and cheque reminders. Kept on this device.</p>
+          </div>
+          <Switch aria-label="Sounds" checked={sounds} onCheckedChange={(v) => { setSounds(v); setSoundsEnabled(v); if (v) playSound("saved"); }} />
+        </div>
         <form className="space-y-4 rounded-lg border bg-card p-5" onSubmit={(e) => { e.preventDefault(); updateCompany(c); toast.success("Company details saved"); }}>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Company Details (printed on vouchers)</h2>
           <Field label="Name"><TitleInput value={c.name} onValueChange={(v) => setC({ ...c, name: v })} /></Field>

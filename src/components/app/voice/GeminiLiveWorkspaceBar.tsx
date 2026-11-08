@@ -203,7 +203,7 @@ export function GeminiLiveWorkspaceBar({
           <div className="voice-panel voice-window mb-2 w-full overflow-hidden rounded-2xl border">
             <div className="voice-history" data-open={isExpanded} inert={!isExpanded}>
               <div className="min-h-0 overflow-hidden">
-                <div ref={scrollRef} className="voice-history-scroll flex flex-col gap-2.5 p-4" role="log" aria-live="polite">
+                <div ref={scrollRef} className="voice-history-scroll select-text flex flex-col gap-2.5 p-4" role="log" aria-live="polite">
                   {chatHistory.length === 0 ? (
                     <p className="py-4 text-center text-xs text-muted-foreground">Abhi koi baat-cheet nahi hui…</p>
                   ) : chatHistory.map((chat, idx) => (
@@ -223,7 +223,7 @@ export function GeminiLiveWorkspaceBar({
               className="flex min-h-11 w-full items-center justify-center gap-2 px-4 py-2 text-center"
             >
               {liveTranscript
-                ? <span className="min-w-0 truncate text-xs font-medium text-foreground/90">{romanize(liveTranscript)}</span>
+                ? <span className="min-w-0 select-text truncate text-xs font-medium text-foreground/90">{romanize(liveTranscript)}</span>
                 : <span aria-hidden className="h-1 w-9 rounded-full bg-foreground/20" />}
               <ChevronUp className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} />
             </button>

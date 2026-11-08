@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { toast } from "sonner";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { checkPw } from "@/lib/db";
+import { fieldError } from "@/lib/field-error";
 
 export function PinActionDialog({ action, onClose, onVerified }: { action: "edit" | "delete" | null; onClose: () => void; onVerified: (action: "edit" | "delete") => void }) {
   const [pin, setPin] = useState("");
@@ -18,7 +18,7 @@ export function PinActionDialog({ action, onClose, onVerified }: { action: "edit
         setBusy(true);
         const valid = await checkPw(pin);
         setBusy(false);
-        if (!valid) { toast.error("Incorrect PIN"); return; }
+        if (!valid) { fieldError("pin-confirm", "Incorrect PIN"); setPin(""); return; }
         const confirmedAction = action;
         setPin("");
         // Let the PIN dialog's history entry unwind before opening the editor.
@@ -32,7 +32,7 @@ export function PinActionDialog({ action, onClose, onVerified }: { action: "edit
         await closed;
         onVerified(confirmedAction);
       }}>
-        <Input aria-label="PIN" type="password" inputMode="numeric" autoFocus value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 8))} placeholder="Enter your PIN" />
+        <Input id="pin-confirm" aria-label="PIN" type="password" inputMode="numeric" autoFocus value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 8))} placeholder="Enter your PIN" />
         <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" disabled={busy || !pin}>Confirm</Button></div>
       </form>
     </DialogContent>

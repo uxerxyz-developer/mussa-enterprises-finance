@@ -1,7 +1,13 @@
-# INTEGRATION_DIFF.md — v1.6.5
+# INTEGRATION_DIFF.md — v1.6.6
 
 Reference only: every change below is already applied inside this project; nothing has to be merged by hand. See CHANGELOG.md for the version history.
 Compared with v1.0.0 (your original upload): 12 files changed, 10 new files. `src/lib/db.ts`, accounting math, voice files, transaction labels, Cheque Status, "This month" and `PrintHeader` are untouched.
+
+## Q. App-like feel, sidebar, PIN feedback, sounds (v1.6.6)
+- `styles.css`: new blocks at the end (app-like feel, shake and `input.field-error`, sidebar). `__root.tsx`: context-menu and drag handlers.
+- `SidebarNav.tsx`: `ACCENT` map, indicator colour; `AppShell.tsx`: `side-surface` classes, login PIN id and `fieldError`, mic sounds, imports.
+- `field-error.ts`, `PinActionDialog.tsx`, `routes/admin.tsx`: PIN field feedback. `lib/sounds.ts` (new); sound calls in `EntryForm.tsx` and `ChequeStatusCard.tsx`; Sounds switch in `routes/settings.tsx`.
+- `select-text` added on the transcript (`GeminiLiveWorkspaceBar.tsx`), voucher numbers (`vouchers.tsx`, `ledger.$id.tsx`, `EntriesTable.tsx`, `inputs.tsx` PrintHeader) and contact numbers (`ledger.$id.tsx`, `accounts.tsx`).
 
 ## P. Quick Actions colours, mic ring, tile layout (v1.6.5)
 - `styles.css`: `--qa-issue/purchase/expense` (light + dark) and the `.mic-*` ring block; `AppShell.tsx`: mic ring markup (one arc per set).

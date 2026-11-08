@@ -1,14 +1,17 @@
 import { toast } from "sonner";
+import { playSound } from "@/lib/sounds";
 
 /** Shows an error, vibrates on phones and highlights the field with the given id. */
 export function fieldError(id: string | null, message: string) {
   toast.error(message);
   try { navigator.vibrate?.([60, 40, 60]); } catch { /* unsupported */ }
+  playSound("error");
   if (!id || typeof document === "undefined") return;
   const el = document.getElementById(id);
   if (!el) return;
   const target = (el.matches("input,select,textarea,button") ? el : el.querySelector<HTMLElement>("input,select,textarea,button")) ?? el;
-  el.classList.add("field-error");
+  el.classList.add("field-error", "field-shake");
+  setTimeout(() => el.classList.remove("field-shake"), 500);
   el.scrollIntoView({ behavior: "smooth", block: "center" });
   target.focus?.({ preventScroll: true });
   const clear = () => { el.classList.remove("field-error"); el.removeEventListener("input", clear, true); el.removeEventListener("change", clear, true); };

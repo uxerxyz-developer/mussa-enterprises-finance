@@ -180,7 +180,7 @@ function LedgerPage() {
         <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-5 gap-y-1 text-sm">
           <dt className="text-muted-foreground">Type</dt>
           <dd>{accountTypeLabel(d, a.type)}</dd>
-          {a.phone && <><dt className="text-muted-foreground">Contact</dt><dd>{a.phone}</dd></>}
+          {a.phone && <><dt className="text-muted-foreground">Contact</dt><dd className="select-text">{a.phone}</dd></>}
           {a.address && <><dt className="text-muted-foreground">Address</dt><dd>{a.address}</dd></>}
         </dl>
       </div>
@@ -255,7 +255,7 @@ function LedgerPage() {
              </div>
              {partText(e) && <p className="mt-2 text-sm text-muted-foreground">{partText(e)}</p>}
              <CardDetails d={d} e={e} />
-             <div className="mt-3 flex items-center justify-between border-t pt-2"><span className="num text-xs text-muted-foreground">V-{e.voucherNo} · Balance {balText(bal)}</span><div className="flex gap-1"><Button variant="ghost" size="icon" title="Edit · PIN required" aria-label={`Edit voucher V-${e.voucherNo}`} onClick={() => setPending({ entry: e, action: "edit" })}><Pencil /></Button><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" title="Delete · PIN required" aria-label={`Delete voucher V-${e.voucherNo}`} onClick={() => setPending({ entry: e, action: "delete" })}><Trash2 /></Button></div></div>
+             <div className="mt-3 flex items-center justify-between border-t pt-2"><span className="num select-text text-xs text-muted-foreground">V-{e.voucherNo} · Balance {balText(bal)}</span><div className="flex gap-1"><Button variant="ghost" size="icon" title="Edit · PIN required" aria-label={`Edit voucher V-${e.voucherNo}`} onClick={() => setPending({ entry: e, action: "edit" })}><Pencil /></Button><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" title="Delete · PIN required" aria-label={`Delete voucher V-${e.voucherNo}`} onClick={() => setPending({ entry: e, action: "delete" })}><Trash2 /></Button></div></div>
            </div>;
          })}
        </div>}

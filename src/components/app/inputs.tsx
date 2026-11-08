@@ -215,7 +215,7 @@ export function PrintHeader({ title, sub, always }: { title: string; sub?: strin
       </div>
       <div className="mt-3 flex justify-between text-sm">
         <span className="font-semibold uppercase tracking-wide">{title}</span>
-        <span>{sub}</span>
+        <span className="select-text">{sub}</span>
       </div>
     </div>
   );

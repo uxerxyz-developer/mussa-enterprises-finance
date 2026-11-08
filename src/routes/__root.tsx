@@ -120,6 +120,16 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // App-like feel: no browser context menu (save image, search the web ...) and no dragging of images/links,
+  // except inside entry fields and the few places marked select-text.
+  useEffect(() => {
+    const editable = "input, textarea, select, [contenteditable=\"true\"], .select-text";
+    const onMenu = (e: MouseEvent) => { if (!(e.target as HTMLElement | null)?.closest?.(editable)) e.preventDefault(); };
+    const onDrag = (e: DragEvent) => { if ((e.target as HTMLElement | null)?.closest?.("img, a")) e.preventDefault(); };
+    document.addEventListener("contextmenu", onMenu);
+    document.addEventListener("dragstart", onDrag);
+    return () => { document.removeEventListener("contextmenu", onMenu); document.removeEventListener("dragstart", onDrag); };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -72,7 +72,7 @@ export function EntriesTable({
                     <Checkbox checked={!!selected?.has(e.id)} onCheckedChange={() => onToggle?.(e.id)} />
                   </td>
                 )}
-                <td className="num px-3 py-2 text-muted-foreground">V-{e.voucherNo}</td>
+                <td className="num select-text px-3 py-2 text-muted-foreground">V-{e.voucherNo}</td>
                 <td className="px-3 py-2 whitespace-nowrap">
                   <div>{fmtDate(e.date)}</div>
                   <div className="text-xs text-muted-foreground">{fmtTime(e.createdAt)}</div>
