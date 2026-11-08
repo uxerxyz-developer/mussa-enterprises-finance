@@ -712,6 +712,7 @@ function SyncButton() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const run = async () => {
+    if (!import.meta.env["VITE_SUPABASE_URL"] || !import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"]) { toast("Cloud backup is not set up — use file backup in Settings"); navigate({ to: "/settings" }); return; }
     const { data } = await supabase.auth.getSession();
     if (!data.session) { toast("Sign in to Cloud Backup to sync"); navigate({ to: "/settings" }); return; }
     if (!navigator.onLine) { toast.error("You are offline — backup will run when back online"); return; }

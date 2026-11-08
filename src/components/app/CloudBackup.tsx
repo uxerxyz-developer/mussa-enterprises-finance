@@ -8,7 +8,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { backupToCloud, lastCloudBackup, restoreFromCloud } from "@/lib/cloud";
 import { fmtDateTime } from "@/lib/format";
 
+const cloudConfigured = Boolean(import.meta.env["VITE_SUPABASE_URL"] && import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"]);
+
 export function CloudBackup() {
+  if (!cloudConfigured)
+    return (
+      <div className="space-y-2 rounded-lg border bg-card p-5">
+        <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground"><Cloud className="h-4 w-4" /> Cloud Backup</h2>
+        <p className="text-xs text-muted-foreground">Cloud backup is not set up for this app. Your data stays safe on this device; use the file backup above.</p>
+      </div>
+    );
+  return <CloudBackupInner />;
+}
+
+function CloudBackupInner() {
   const [email, setEmail] = useState<string | null>(null);
   const [form, setForm] = useState({ email: "", password: "" });
   const [busy, setBusy] = useState(false);
