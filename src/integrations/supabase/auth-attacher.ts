@@ -8,7 +8,7 @@ export const attachSupabaseAuth = createMiddleware({ type: 'function' }).client(
   async ({ next }) => {
     // Local-first: without a connected Supabase backend (URL / publishable key not set) there is no
     // session to read, and touching the client would throw. Just continue the call.
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) {
+    if (!import.meta.env['VITE_SUPABASE_URL'] || !import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY']) {
       return next()
     }
     const { data } = await supabase.auth.getSession()
