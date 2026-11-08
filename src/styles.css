@@ -217,10 +217,10 @@
   --entry-card: oklch(0.53 0.1 215);
   --entry-card-soft: oklch(0.96 0.025 215);
   --qa-receive: oklch(0.62 0.14 160);
-  --qa-issue: oklch(0.62 0.2 38);
+  --qa-issue: oklch(0.55 0.2 18);
   --qa-sale: oklch(0.62 0.13 215);
-  --qa-purchase: oklch(0.847 0.152 81);
-  --qa-expense: oklch(0.554 0.196 19.5);
+  --qa-purchase: oklch(0.73 0.17 68);
+  --qa-expense: oklch(0.62 0.2 38);
   --qa-account: oklch(0.58 0.17 295);
   --qa-heat: oklch(0.6 0.18 25);
   --admin-card: oklch(0.5 0.13 350);
@@ -272,10 +272,10 @@
   --entry-card: oklch(0.72 0.09 215);
   --entry-card-soft: oklch(0.28 0.04 215);
   --qa-receive: oklch(0.76 0.14 160);
-  --qa-issue: oklch(0.74 0.17 40);
+  --qa-issue: oklch(0.7 0.17 20);
   --qa-sale: oklch(0.74 0.12 215);
-  --qa-purchase: oklch(0.87 0.155 81);
-  --qa-expense: oklch(0.70 0.18 19.5);
+  --qa-purchase: oklch(0.80 0.17 70);
+  --qa-expense: oklch(0.74 0.17 40);
   --qa-account: oklch(0.72 0.15 295);
   --qa-heat: oklch(0.74 0.16 25);
   --admin-card: oklch(0.69 0.12 350);
@@ -552,20 +552,18 @@
 .mic-btn { cursor: pointer; border: none; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .mic-btn:hover { transform: scale(1.06); }
 .mic-btn:active { transform: scale(0.94); }
-/* Voice button: a soft circulating ring of colour around the icon. Three arcs (red-magenta, yellow-green, cyan-blue) turn at different speeds and directions, so the colours drift past each other instead of moving as one fixed gradient. Only transforms animate. */
+/* Voice button: one unbroken, soft ring of the full colour wheel that keeps turning clockwise at one steady speed. It hugs the visible mic circle (about 21px inside the 36px button). Only a transform animates. */
 :root { --mic-r1: oklch(0.64 0.22 25); --mic-r2: oklch(0.6 0.24 340); --mic-y1: oklch(0.8 0.17 80); --mic-y2: oklch(0.68 0.18 150); --mic-c1: oklch(0.7 0.13 205); --mic-c2: oklch(0.55 0.21 270); }
 .dark { --mic-r1: oklch(0.72 0.21 25); --mic-r2: oklch(0.7 0.24 340); --mic-y1: oklch(0.88 0.17 95); --mic-y2: oklch(0.8 0.19 150); --mic-c1: oklch(0.82 0.13 205); --mic-c2: oklch(0.68 0.2 270); }
-.mic-mesh { position: absolute; inset: -4px; z-index: 0; border-radius: 9999px; pointer-events: none; transition: opacity 0.4s ease; }
+.mic-mesh { position: absolute; inset: 4.5px; z-index: 0; border-radius: 9999px; pointer-events: none; transition: opacity 0.4s ease; }
 .mic-btn[data-open="true"] .mic-mesh { opacity: 0.45; }
 .mic-ringset { position: absolute; inset: 0; border-radius: 9999px;
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.6px), #000 calc(100% - 2.6px), #000 calc(100% - 1.2px), transparent calc(100% - 0.2px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3.6px), #000 calc(100% - 2.6px), #000 calc(100% - 1.2px), transparent calc(100% - 0.2px)); }
-.mic-glowset { position: absolute; inset: 0; filter: blur(3.5px); opacity: 0.65; }
-.mic-arc { position: absolute; inset: 0; border-radius: 9999px; will-change: transform; }
-.mic-arc-1 { background: conic-gradient(from 0deg, transparent 0deg, var(--mic-r1) 60deg, var(--mic-r2) 125deg, transparent 195deg); animation: mic-spin 9s linear infinite; }
-.mic-arc-2 { background: conic-gradient(from 120deg, transparent 0deg, var(--mic-y1) 55deg, var(--mic-y2) 120deg, transparent 190deg); animation: mic-spin 13s linear infinite reverse; }
-.mic-arc-3 { background: conic-gradient(from 240deg, transparent 0deg, var(--mic-c1) 60deg, var(--mic-c2) 130deg, transparent 200deg); animation: mic-spin 17s linear infinite; }
-.dark .mic-arc { mix-blend-mode: screen; }
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.3px), #000 calc(100% - 0.9px), transparent 100%);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.3px), #000 calc(100% - 0.9px), transparent 100%); }
+.mic-glowset { position: absolute; inset: 0; filter: blur(2.5px); opacity: 0.6; }
+.mic-arc { position: absolute; inset: 0; border-radius: 9999px; will-change: transform;
+  background: conic-gradient(from 0deg, var(--mic-r1), var(--mic-y1), var(--mic-y2), var(--mic-c1), var(--mic-c2), var(--mic-r2), var(--mic-r1));
+  animation: mic-spin 6s linear infinite; }
 @keyframes mic-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .mic-arc { animation: none; } }
 

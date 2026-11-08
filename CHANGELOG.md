@@ -1,9 +1,16 @@
 # CHANGELOG — Mussa Finance
 
-Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.4.zip`), in this file, and inside the app under **Settings & Backup → App version**.
+Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.5.zip`), in this file, and inside the app under **Settings & Backup → App version**.
 When something is wrong, tell me: **the version shown in Settings + the screen + what you did + a screenshot**. I will look only at the files listed for that version.
 
-## v1.6.4 — Net payments in cash/bank, bounced cheques out of every total, Cheque Status, Treasury and mic polish (current)
+## v1.6.5 — Quick Actions colours, mic ring, Treasury tile layout (current)
+- **Quick Actions** (`styles.css`, `--qa-*` only): Issue Payment is back to its earlier crimson; Expense takes the orange-red Issue had in v1.6.3/1.6.4; Purchase is back on its real amber (hue about 68-70), richer than the pale yellow of v1.6.4 (the dark theme keeps the bigger own-colour share for Purchase and Expense).
+- **Voice button ring**: smaller and sized to the visible mic circle (no empty gap), one unbroken full-colour ring that turns clockwise at one steady speed (6 s); the three fading arcs are gone. It still dims to about 45% while the dock is open. `AppShell.tsx` markup and the `.mic-*` block in `styles.css`.
+- **Treasury small tiles** (`TreasuryCard.tsx`): icon, title and amount sit lower in the tile; graphics stay top-right; titles (including "Pending cheques") and the cheque note are a single line. The Receivables graphic now has 5 bars instead of 6 (`TreasuryViz.tsx` `Bars`).
+- Nothing in `db.ts` or accounting changed.
+- `src/lib/version.ts`: 1.6.5.
+
+## v1.6.4 — Net payments in cash/bank, bounced cheques out of every total, Cheque Status, Treasury and mic polish
 - **Net sale / net purchase now move the money** (`db.ts` `entryFunds`, new `isNetPaid`): with a payment method recorded, a net purchase takes the amount out of Cash in hand (cash) or the chosen bank (cheque/online), and a net sale brings it in. Cheque rules are the same as before: pending is listed separately, cleared changes the balance, bounced changes nothing. The party ledger, party balance, `signedForAccount` and credit entries are unchanged (a net trade still leaves Debit/Credit empty). A net entry with no payment method moves no money. Because balances are always derived from entries, this also applies to existing net entries that have a method.
 - **Bounced cheques are not counted in any total** (new `notBounced` helper, `db.ts`): Reports type totals and worker salary/advance, Dashboard month totals and In/Out, the totals under the entries tables (Sales, Purchases and the other pages, Expenses), worker salary/advance paid (`workerMonth`, `workerLifetime`) and the voice assistant's reports. The rows themselves stay in lists with their BOUNCED mark.
 - **Dashboard In/Out this month**: bounced removed, and net sale/purchase payments (with a method) included, so it agrees with the bank and cash balances.

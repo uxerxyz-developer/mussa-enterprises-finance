@@ -79,12 +79,12 @@ const BAR_COLORS = [
 
 /** Six little bars in different colours (top right of the Receivables tile). Biggest party is the tallest; missing slots are faint stubs. */
 export function Bars({ values, masked }: { values: number[]; masked?: boolean | undefined }) {
-  const real = masked ? [] : [...values].sort((a, b) => b - a).slice(0, 6).reverse();
+  const real = masked ? [] : [...values].sort((a, b) => b - a).slice(0, 5).reverse();
   const max = Math.max(...real, 0);
-  const stubs = 6 - real.length;
+  const stubs = 5 - real.length;
   return (
     <span className="flex h-[22px] items-end gap-[3px]" aria-hidden>
-      {Array.from({ length: 6 }, (_, i) => {
+      {Array.from({ length: 5 }, (_, i) => {
         const v = masked || i < stubs ? null : real[i - stubs]!;
         return <span key={i} className={cn("tre-bar", v === null && "opacity-25")}
           style={{ height: v === null || max <= 0 ? (masked ? "55%" : "16%") : `${Math.max(24, (v / max) * 100)}%`, background: BAR_COLORS[i], animationDelay: `${i * 50}ms` }} />;

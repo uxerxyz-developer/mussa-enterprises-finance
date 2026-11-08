@@ -685,8 +685,8 @@ function MicButton() {
     <>
       <button type="button" data-voice-trigger aria-label="Voice assistant" title="Voice assistant" aria-pressed={open} data-open={open ? "true" : "false"} onClick={() => (open ? close() : openDock())} className={isConnected ? "mic-btn mic-btn-active" : "mic-btn"}>
         <span className="mic-mesh" aria-hidden="true">
-          <span className="mic-ringset"><span className="mic-arc mic-arc-1" /><span className="mic-arc mic-arc-2" /><span className="mic-arc mic-arc-3" /></span>
-          <span className="mic-glowset"><span className="mic-ringset"><span className="mic-arc mic-arc-1" /><span className="mic-arc mic-arc-2" /><span className="mic-arc mic-arc-3" /></span></span>
+          <span className="mic-ringset"><span className="mic-arc" /></span>
+          <span className="mic-glowset"><span className="mic-ringset"><span className="mic-arc" /></span></span>
         </span>
         <span className="mic-art" aria-hidden="true">
           <img src={micLightIdle.url} alt="" className="mic-image mic-image-light" />
