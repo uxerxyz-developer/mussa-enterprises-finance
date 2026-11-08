@@ -34,6 +34,7 @@ let lastSent = "";
 /** Debounced auto-backup; silently skipped when offline or signed out. */
 export function scheduleAutoBackup() {
   clearTimeout(timer);
+  if (!import.meta.env["VITE_SUPABASE_URL"] || !import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"]) return;
   timer = setTimeout(async () => {
     if (!navigator.onLine) return;
     const json = exportJSON();
