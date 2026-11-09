@@ -1157,3 +1157,8 @@ input.field-error, select.field-error, textarea.field-error { outline: 2px solid
 .nav-indicator { box-shadow: 0 0 5px color-mix(in oklab, var(--nv-ind, var(--sidebar-ring)) 60%, transparent); }
 .nav-group-head { color: color-mix(in oklab, var(--sidebar-foreground) 92%, transparent); }
 .nav-group-head:hover { box-shadow: none; transform: none; }
+
+/* System & Administration: the group with the major items is tinted amber-red (Admin Panel) and blue-grey (Settings & Backup). */
+:root { --nv-admin: oklch(0.74 0.15 48); --nv-system: oklch(0.76 0.07 245); }
+.nav-group-head[data-group="system"] { color: color-mix(in oklab, var(--nv-admin) 55%, var(--sidebar-foreground)); }
+.nav-group-head[data-group="system"] > span::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 2px; border-radius: 9999px; background: var(--nv-admin); box-shadow: 0 0 0 2px color-mix(in oklab, var(--nv-admin) 28%, transparent); }

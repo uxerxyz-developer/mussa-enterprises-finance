@@ -31,8 +31,16 @@ ENTRY RULES (follow strictly)
 3. Never ask for more than the tool says, and never invent values. For a cheque ask the bank (only from list_banks) and the cheque number; for online ask the bank and reference; for a sale or purchase ask the material (list_materials), weight in kg and rate (or the total), and whether it is credit or net (settled on the spot).
 4. A sale is only for BUYER accounts, a purchase only for SUPPLIER accounts, salary and advance only for WORKER accounts; payments and expenses never for workers. If the account is not found, say it is not in the system and ask if you should create it. If the name is incomplete, use the closest match the tool returns; if the tool says ambiguous, read the full names and ask which one.
 5. When record_transaction_draft returns draft_ready, read the summary aloud and ask "save kar dun?". Call confirm_pending ONLY after a clear yes. If the user says no or wants a change, call cancel_pending or call record_transaction_draft again with the change.
-6. To create an account use create_account (name, type, optional phone, opening balance, wages for workers). Read the summary and confirm the same way. After it is created, continue with the entry.
+6. To create an account use create_account with the name and type, then follow what the tool asks (phone, address, opening balance, and for workers wages and CNIC). Ask these by voice, a little at a time; the user may say there is none or skip. If there is an opening balance you MUST ask which way it runs: "hum ne dene hain" = payable, "hum ne lene hain" = receivable. Never guess the side. Read the summary and confirm the same way. After it is created, continue with the entry.
 7. After saving, tell the user the voucher number briefly and be ready for a fresh entry; do not reuse the previous party or amount unless asked.
+
+AMOUNTS (very important)
+- Pakistani units: 1 hazar = 1,000; 1 lakh = 1,00,000 (100 hazar); 1 crore = 1,00,00,000 (100 lakh); 1 arab = 100 crore. "dedh" = 1.5, "dhai" = 2.5, "sawa" = 1.25, "paune" = 0.75 of the unit.
+- When the user says an amount, do NOT build a long number yourself. Fill the parts: amount_crore, amount_lakh, amount_thousand, amount_rupees (for an opening balance: opening_crore, opening_lakh, opening_thousand, opening_rupees). Example: "ek crore pachas lakh" = amount_crore 1, amount_lakh 50. "paanch lakh" = amount_lakh 5. "sawa lakh" = amount_lakh 1, amount_thousand 25.
+- Every money value in a tool answer comes with a _words field (for example "14 lakh 79 hazar 640 rupay") and a _text field. Read the _words value exactly. NEVER convert, round, add or compare amounts yourself; if a total is needed, use the total the tool gives. Balances also come with balance_side words; use them to say whether it is to be received or to be paid.
+- Before saving, the draft summary contains the amount in words. Read it aloud so the user can catch a mistake.
+- Bank names: any bank from list_banks may be used. If the name is unclear, say the bank you understood and ask to confirm.
+- Names: when you hear an account name, repeat the name you understood (the known names are listed below); if it is close but not exact, ask to confirm before using it.
 
 QUESTIONS ABOUT DATA
 - Use last_transaction, search_entries, account_balance, get_overview and get_report. Always say the date, type and amount (and voucher number) when you report an entry.
@@ -60,7 +68,8 @@ QUESTIONS ABOUT DATA
           parameters: obj({
             type: { type: "STRING", enum: ["sale", "purchase", "inward", "outward", "expense", "salary", "advance"], description: "inward = receive payment, outward = issue payment" },
             party_name: S("Account name as the user said it (partial or misspelt is fine). For expense: who was paid."),
-            amount: N("Total amount in PKR (for sale/purchase it can be omitted when weight_kg and rate are given)"),
+            amount: N("Total amount in PKR as a plain number, only for small amounts; for lakh/crore use the parts below (for sale/purchase it can be omitted when weight_kg and rate are given)"),
+            amount_crore: N("Crore part of the amount"), amount_lakh: N("Lakh part of the amount"), amount_thousand: N("Hazar (thousand) part of the amount"), amount_rupees: N("Remaining rupees below one thousand"),
             material: S("Material name for sale/purchase"),
             weight_kg: N("Weight in kg for sale/purchase"),
             rate: N("Rate in rupees per kg for sale/purchase"),
@@ -77,7 +86,7 @@ QUESTIONS ABOUT DATA
         { name: "confirm_pending", description: "Save the pending draft (entry or account). Call ONLY after the user clearly said yes to your read-back.", parameters: obj({ force: { type: "BOOLEAN", description: "true only if the app warned about a similar entry and the user still wants to save" } }) },
         { name: "cancel_pending", description: "Discard the pending draft." },
         { name: "find_account", description: "Look up an account from a spoken name. Pass entry_type so only the right kind of account is searched.", parameters: obj({ name: S("Name as spoken"), entry_type: { type: "STRING", enum: ["sale", "purchase", "inward", "outward", "expense", "salary", "advance"] } }, ["name"]) },
-        { name: "create_account", description: "Draft a new account. The app asks what is missing; the user confirms before it is created.", parameters: obj({ name: S("Full account name"), type: S("Buyer, Supplier, Worker or another type the app has"), phone: S("Phone, optional"), address: S("Address, optional"), opening_balance: N("Opening balance, default 0"), fixed_wages: N("Monthly wages (workers)"), cnic: S("CNIC (workers), optional"), confirm_new: { type: "BOOLEAN", description: "true only if the user insists on a new account although a similar one exists" } }, ["name", "type"]) },
+        { name: "create_account", description: "Draft a new account. The app asks what is missing; the user confirms before it is created.", parameters: obj({ name: S("Full account name"), type: S("Buyer, Supplier, Worker or another type the app has"), phone: S("Phone number, or 'none'"), address: S("Address, or 'none'"), opening_balance: N("Opening balance as a plain number (use the parts for lakh/crore), 0 if none"), opening_crore: N("Crore part of the opening balance"), opening_lakh: N("Lakh part of the opening balance"), opening_thousand: N("Hazar part of the opening balance"), opening_rupees: N("Rupees below one thousand of the opening balance"), opening_side: { type: "STRING", enum: ["payable", "receivable"], description: "payable = we owe them; receivable = they owe us. Always ask, never guess." }, skip_optional: { type: "BOOLEAN", description: "true when the user wants to skip phone, address and opening balance" }, fixed_wages: N("Monthly wages (workers)"), cnic: S("CNIC (workers), optional"), confirm_new: { type: "BOOLEAN", description: "true only if the user insists on a new account although a similar one exists" } }, ["name", "type"]) },
         { name: "list_banks", description: "The banks that exist in the app. Offer only these." },
         { name: "list_materials", description: "The materials that exist in the app." },
         { name: "list_categories", description: "The expense categories that exist in the app." },

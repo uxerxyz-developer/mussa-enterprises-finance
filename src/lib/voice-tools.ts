@@ -10,6 +10,7 @@ import {
 } from "./db";
 import { fmtTon } from "./format";
 import { matchNames, type Ranked } from "./fuzzy";
+import { PK_BANKS } from "./banks";
 
 export type Args = Record<string, unknown>;
 export type ToolResult = Record<string, unknown>;
@@ -21,7 +22,55 @@ const num = (v: unknown): number | undefined => {
   const n = typeof v === "number" ? v : typeof v === "string" ? Number(v.replace(/,/g, "")) : NaN;
   return Number.isFinite(n) ? n : undefined;
 };
-const money = (n: number) => `Rs ${Math.round(n * 100) / 100}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+/** 1479640 -> "14,79,640" (the grouping the app shows everywhere). */
+const groupIN = (s: string) => { const last = s.slice(-3), rest = s.slice(0, -3); return rest ? `${rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",")},${last}` : last; };
+export function money(n: number): string {
+  const r = Math.round(Math.abs(n) * 100) / 100;
+  const [i = "0", f] = r.toFixed(2).split(".");
+  return `Rs ${n < 0 ? "-" : ""}${groupIN(i)}${f && f !== "00" ? `.${f}` : ""}`;
+}
+/** 1479640 -> "14 lakh 79 hazar 640 rupay": the words the assistant reads aloud, so it never has to convert digits itself. */
+export function speakAmount(n: number): string {
+  const v = Math.round(Math.abs(n) * 100) / 100;
+  let r = Math.floor(v);
+  const paisa = Math.round((v - r) * 100);
+  const out: string[] = [];
+  const take = (unit: number, name: string) => { const c = Math.floor(r / unit); r -= c * unit; if (c) out.push(`${c} ${name}`); };
+  take(1e9, "arab"); take(1e7, "crore"); take(1e5, "lakh"); take(1e3, "hazar");
+  out.push(`${r || (out.length ? "" : 0)}`.trim());
+  const text = out.filter(Boolean).join(" ") + " rupay";
+  return paisa ? `${text} aur ${paisa} paisa` : text;
+}
+/** An amount given in parts (crore, lakh, thousand, rupees) is summed here, so the model never has to build an 8-digit number. */
+export function partsAmount(a: Args, prefix = "amount"): number | undefined {
+  const g = (k: string) => num(a[`${prefix}_${k}`]);
+  const [cr, lk, th, rs] = [g("crore"), g("lakh"), g("thousand"), g("rupees")];
+  if (cr === undefined && lk === undefined && th === undefined && rs === undefined) return undefined;
+  return (cr ?? 0) * 1e7 + (lk ?? 0) * 1e5 + (th ?? 0) * 1e3 + (rs ?? 0);
+}
+const MONEY_KEY = /(amount|balance|total|salar|advance|receivable|payable|sales|purchases|expenses|opening|closing|wages|paid|outstanding|remaining)/;
+const NOT_MONEY = /(kg|count|_no$|rate|weight|days|_text$|_words$)/;
+/** Adds `<field>_text` ("Rs 14,79,640") and `<field>_words` to every money field of a tool answer. */
+export function withSpoken<T>(value: T): T {
+  if (Array.isArray(value)) return value.map((x) => withSpoken(x)) as unknown as T;
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, x] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = withSpoken(x);
+      if (typeof x === "number" && Number.isFinite(x) && MONEY_KEY.test(k) && !NOT_MONEY.test(k)) { out[`${k}_text`] = money(x); out[`${k}_words`] = speakAmount(x); }
+    }
+    return out as T;
+  }
+  return value;
+}
+type BankChoice = { id: string; name: string };
+/** Banks the user already has plus the built-in list of banks (the same names the entry form offers). */
+export function bankChoices(d: Data): BankChoice[] {
+  const have = liveBanks(d).map((b) => ({ id: b.id, name: b.name }));
+  const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const extra = PK_BANKS.filter((n) => !have.some((b) => key(b.name) === key(n))).map((name) => ({ id: "", name }));
+  return [...have, ...extra];
+}
 
 /* ---------------- dates ---------------- */
 const iso = (y: number, m: number, d: number) => `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -62,7 +111,9 @@ const allowed = (a: Account, type?: EntryType) => {
   return true;
 };
 
-const accInfo = (d: Data, a: Account) => ({ id: a.id, name: a.name, type: a.type, type_label: accountTypeLabel(d, a.type), balance: accountBalance(d, a.id), balance_class: balanceClass(a, accountBalance(d, a.id)) });
+/** Only for the assistant to speak: which way the balance runs. (Screens and ledgers keep Dr / Cr.) */
+const sideWords = (b: number) => (b > 0 ? "Dr: aap ko is se lena hai (receivable / advance)" : b < 0 ? "Cr: aap ko isko dena hai (payable)" : "zero balance");
+const accInfo = (d: Data, a: Account) => ({ id: a.id, name: a.name, type: a.type, type_label: accountTypeLabel(d, a.type), balance: accountBalance(d, a.id), balance_class: balanceClass(a, accountBalance(d, a.id)), balance_side: sideWords(accountBalance(d, a.id)) });
 
 /** Look up an account from a spoken (possibly partial / misspelt) name, limited to the types the entry needs. */
 export function findAccountTool(d: Data, name: string, entryType?: EntryType): ToolResult {
@@ -125,7 +176,7 @@ export function validateEntryDraft(d: Data, a: Args, today: string): ToolResult 
   }
   // material, weight, rate, amount
   let mat: { id: string; name: string } | undefined;
-  let weight: number | undefined, rate: number | undefined, amount = num(a["amount"]);
+  let weight: number | undefined, rate: number | undefined, amount = partsAmount(a) ?? num(a["amount"]);
   if (trade) {
     const mn = str(a["material"]);
     if (!mn) missing.push(`material: one of ${d.materials.map((m) => m.name).join(", ")}`);
@@ -140,16 +191,16 @@ export function validateEntryDraft(d: Data, a: Args, today: string): ToolResult 
   if (trade && !payMode) missing.push(`pay_mode: "credit" (pay later) or "net" (settled on the spot) for this ${type}`);
   // payment method, bank, cheque
   const showPay = meta.cash || (trade && payMode === "net");
-  let method: PayMethod | undefined, bank: { id: string; name: string } | undefined, chequeNo: string | undefined, reference: string | undefined;
+  let method: PayMethod | undefined, bank: BankChoice | undefined, chequeNo: string | undefined, reference: string | undefined;
   if (showPay) {
     const pmeth = str(a["payment_method"]);
     if (pmeth === "cash" || pmeth === "cheque" || pmeth === "online") method = pmeth;
     else missing.push("payment_method: cash, cheque or online");
     if (method && method !== "cash") {
-      const banks = liveBanks(d);
+      const banks = bankChoices(d);
       const bn = str(a["bank_name"]);
-      if (!bn) missing.push(`bank_name: one of ${banks.map((b) => b.name).join(", ") || "(no bank is set up yet)"}`);
-      else { const r = matchNames(bn, banks, (b) => b.name); if (r.best) bank = r.best; else return { ok: false, status: r.status === "ambiguous" ? "bank_ambiguous" : "bank_not_found", banks: banks.map((b) => b.name), instruction: "Ask the user which of these banks. Never invent a bank name." }; }
+      if (!bn) missing.push(`bank_name: the bank the user names (any bank from list_banks, for example ${banks.slice(0, 4).map((b) => b.name).join(", ")})`);
+      else { const r = matchNames(bn, banks, (b) => b.name); if (r.best) bank = r.best; else return { ok: false, status: r.status === "ambiguous" ? "bank_ambiguous" : "bank_not_found", candidates: r.candidates.map((c) => c.item.name), banks: banks.slice(0, 12).map((b) => b.name), instruction: "Read the candidate banks to the user and ask which one. Never invent a bank name." }; }
       if (method === "cheque") { const cn = str(a["cheque_no"]); if (!cn) missing.push('cheque_no: ask for the cheque number (pass "none" if the user does not have it)'); else if (!NONE(cn)) chequeNo = cn; }
       if (method === "online") { const rf = str(a["reference"]); if (!rf) missing.push('reference: ask for the transaction reference (pass "none" to skip)'); else if (!NONE(rf)) reference = rf; }
     }
@@ -161,7 +212,7 @@ export function validateEntryDraft(d: Data, a: Args, today: string): ToolResult 
   const draft: EntryDraft = {
     type, date, amount: amt,
     particulars: trade ? tradeText || label : str(a["remarks"]) || (type === "expense" ? cat?.name ?? "Expense" : label),
-    accountId: acc?.id, accountName: acc?.name, method, bankId: bank?.id, bankName: bank?.name, chequeNo, reference,
+    accountId: acc?.id, accountName: acc?.name, method, bankId: bank?.id || undefined, bankName: bank?.name, chequeNo, reference,
     categoryId: cat?.id, categoryName: cat?.name, materialId: mat?.id, materialName: mat?.name, weightKg: trade ? weight : undefined, rate: trade ? rate : undefined,
     payMode: trade ? payMode : undefined, remarks: trade ? str(a["remarks"]) || undefined : undefined,
   };
@@ -172,7 +223,7 @@ export function summarizeDraft(x: EntryDraft): string {
   const bits = [`${ENTRY_TYPES[x.type].label}${x.accountName ? ` ${x.type === "sale" ? "to" : x.type === "purchase" ? "from" : x.type === "inward" ? "from" : "to"} ${x.accountName}` : ""}`];
   if (x.materialName) bits.push(`${x.materialName}${x.weightKg ? ` ${fmtTon(x.weightKg)}` : ""}${x.rate ? ` at Rs ${x.rate} per kg` : ""}`);
   if (x.categoryName) bits.push(`category ${x.categoryName}`);
-  bits.push(`total ${money(x.amount)}`);
+  bits.push(`total ${money(x.amount)} (${speakAmount(x.amount)})`);
   if (x.payMode) bits.push(x.payMode === "credit" ? "credit" : "net, paid on the spot");
   if (x.method) bits.push(`${METHODS[x.method]}${x.bankName ? ` via ${x.bankName}` : ""}${x.chequeNo ? `, cheque ${x.chequeNo}` : ""}${x.reference ? `, ref ${x.reference}` : ""}`);
   bits.push(`date ${x.date}`);
@@ -201,7 +252,7 @@ export function entryPayload(x: EntryDraft) {
 }
 
 /* ---------------- account drafts ---------------- */
-export interface AccountDraft { name: string; type: AccountType; typeLabel: string; phone: string; address: string; openingBalance: number; fixedWages?: number | undefined; idCard?: string | undefined }
+export interface AccountDraft { name: string; type: AccountType; typeLabel: string; phone: string; address: string; openingBalance: number; openingSide?: "payable" | "receivable" | undefined; fixedWages?: number | undefined; idCard?: string | undefined }
 
 export function validateAccountDraft(d: Data, a: Args): ToolResult {
   const name = str(a["name"]);
@@ -214,13 +265,28 @@ export function validateAccountDraft(d: Data, a: Args): ToolResult {
   else { const r = matchNames(tn, types, (t) => t.name, 0.7); type = r.best ?? r.candidates[0]?.item; if (!type) return { ok: false, status: "type_not_found", types: types.map((t) => t.name), instruction: "Ask the user to pick one of these account types." }; }
   if (type?.id === "worker" && a["fixed_wages"] === undefined) missing.push('fixed_wages: monthly wages in rupees (pass 0 if not decided)');
   if (missing.length) return { ok: false, status: "missing_fields", missing, instruction: "Ask the user ONLY for these, then call create_account again with everything collected." };
+  // The details the account form asks for: ask once, but let the user skip.
+  const skip = a["skip_optional"] === true;
+  const phoneArg = str(a["phone"]), addrArg = str(a["address"]);
+  const openingArg = partsAmount(a, "opening") ?? num(a["opening_balance"]);
+  const ask: string[] = [];
+  if (!skip) {
+    if (!phoneArg) ask.push('phone: ask for the phone number (pass "none" if there is none)');
+    if (!addrArg) ask.push('address: ask for the address (pass "none" if there is none)');
+    if (openingArg === undefined) ask.push("opening balance: ask if there is an old balance (previous account). If yes, ask the amount AND which way it runs; if no, pass opening_balance 0");
+    if (type?.id === "worker" && !str(a["cnic"])) ask.push('cnic: ask for the CNIC (pass "none" to skip)');
+  }
+  if (ask.length) return { ok: false, status: "ask_details", ask, instruction: "Ask the user these account details in simple Roman Urdu, one or two at a time. The user may say they have none or want to skip. Then call create_account again with everything so far (set skip_optional true if the user wants to skip the rest)." };
+  const side = str(a["opening_side"]);
+  const openingAbs = Math.abs(openingArg ?? 0);
+  if (openingAbs > 0 && side !== "payable" && side !== "receivable") return { ok: false, status: "opening_side_needed", instruction: 'Ask: "Ye rakam hum ne dene hain (payable) ya hum ne lene hain (receivable)?" Then call create_account again with opening_side "payable" (we owe them) or "receivable" (they owe us). Never guess.' };
   if (a["confirm_new"] !== true) {
     const similar = matchNames(name, liveAccounts(d).filter((x) => !x.equity), (x) => x.name, 0.8);
     if (similar.status !== "none") return { ok: false, status: "similar_account_exists", candidates: similar.candidates.map((c) => ({ name: c.item.name, type: accountTypeLabel(d, c.item.type) })), instruction: "A similar account already exists. Read these names to the user. If they still want a new one, call create_account again with confirm_new true." };
   }
   const t = type as { id: AccountType; name: string };
-  const draft: AccountDraft = { name, type: t.id, typeLabel: t.name, phone: str(a["phone"]), address: str(a["address"]), openingBalance: num(a["opening_balance"]) ?? 0, fixedWages: t.id === "worker" ? num(a["fixed_wages"]) ?? 0 : undefined, idCard: str(a["cnic"]) || undefined };
-  return { ok: true, status: "draft_ready", draft, summary: `New ${t.name} account ${name}${draft.phone ? `, phone ${draft.phone}` : ""}${draft.openingBalance ? `, opening balance ${money(draft.openingBalance)}` : ""}${draft.fixedWages ? `, wages ${money(draft.fixedWages)}` : ""}` };
+  const draft: AccountDraft = { name, type: t.id, typeLabel: t.name, phone: NONE(phoneArg) ? "" : phoneArg, address: NONE(addrArg) ? "" : addrArg, openingBalance: side === "payable" ? -openingAbs : openingAbs, openingSide: openingAbs > 0 ? (side as "payable" | "receivable") : undefined, fixedWages: t.id === "worker" ? num(a["fixed_wages"]) ?? 0 : undefined, idCard: NONE(str(a["cnic"])) ? undefined : str(a["cnic"]) || undefined };
+  return { ok: true, status: "draft_ready", draft, summary: `New ${t.name} account ${name}${draft.phone ? `, phone ${draft.phone}` : ""}${draft.openingBalance ? `, opening balance ${money(Math.abs(draft.openingBalance))} (${speakAmount(draft.openingBalance)}) ${draft.openingSide === "payable" ? "payable: we owe them" : "receivable: they owe us"}` : ""}${draft.fixedWages ? `, wages ${money(draft.fixedWages)}` : ""}` };
 }
 
 /* ---------------- questions about the data ---------------- */
@@ -291,7 +357,7 @@ export function overviewTool(d: Data, today: string): ToolResult {
   const sum = (t: EntryType) => live.filter((e) => e.type === t && notBounced(e)).reduce((s, e) => s + e.amount, 0);
   const p = partyTotals(d);
   return {
-    status: "ok", today, funds: fundList(d).map((f) => ({ name: f.name, balance: f.closing })),
+    status: "ok", today, funds: fundList(d).map((f) => ({ name: f.name, balance: f.closing })), funds_total: fundList(d).reduce((s, f) => s + f.closing, 0),
     receivables: p.receivable, payables: p.payable, supplier_advances: p.supplierAdvance, customer_advances: p.customerAdvance, worker_advance_outstanding: p.workerAdvance,
     this_month: { sales: sum("sale"), purchases: sum("purchase"), expenses: sum("expense"), salaries: sum("salary") },
     stock_kg: stockSummary(d).filter((r) => r.stock !== 0).map((r) => ({ material: r.name, kg: Math.round(r.stock) })),
@@ -305,15 +371,16 @@ export function reportTool(d: Data, a: Args, today: string): ToolResult {
   const from = str(a["from"]) || today.slice(0, 8) + "01", to = str(a["to"]) || today;
   const inRange = (e: { date: string }) => e.date >= from && e.date <= to;
   const group = (rows: Entry[], key: (e: Entry) => string) => { const m = new Map<string, number>(); rows.forEach((e) => m.set(key(e), (m.get(key(e)) ?? 0) + e.amount)); return [...m].sort((x, y) => y[1] - x[1]).slice(0, 10).map(([k, v]) => ({ name: k, total: v })); };
+  const live = (rows: Entry[]) => rows.filter(notBounced);
   const acc = (e: Entry) => d.accounts.find((x) => x.id === e.accountId)?.name ?? "—";
-  if (rep === "sales" || rep === "purchases") { const rows = liveEntries(d).filter((e) => e.type === (rep === "sales" ? "sale" : "purchase") && inRange(e)); return { status: "ok", report: rep, from, to, count: rows.length, total: rows.filter(notBounced).reduce((s, e) => s + e.amount, 0), total_kg: rows.reduce((s, e) => s + (e.weightKg ?? 0), 0), top_accounts: group(rows, acc) }; }
-  if (rep === "expenses") { const rows = liveEntries(d).filter((e) => e.type === "expense" && inRange(e)); return { status: "ok", report: rep, from, to, count: rows.length, total: rows.filter(notBounced).reduce((s, e) => s + e.amount, 0), by_category: group(rows, (e) => d.categories.find((c) => c.id === e.categoryId)?.name ?? "Other") }; }
+  if (rep === "sales" || rep === "purchases") { const rows = liveEntries(d).filter((e) => e.type === (rep === "sales" ? "sale" : "purchase") && inRange(e)); return { status: "ok", report: rep, from, to, count: rows.length, total: rows.filter(notBounced).reduce((s, e) => s + e.amount, 0), total_kg: rows.reduce((s, e) => s + (e.weightKg ?? 0), 0), top_accounts: group(live(rows), acc) }; }
+  if (rep === "expenses") { const rows = liveEntries(d).filter((e) => e.type === "expense" && inRange(e)); return { status: "ok", report: rep, from, to, count: rows.length, total: rows.filter(notBounced).reduce((s, e) => s + e.amount, 0), by_category: group(live(rows), (e) => d.categories.find((c) => c.id === e.categoryId)?.name ?? "Other") }; }
   if (rep === "stock") return { status: "ok", report: rep, stock: stockSummary(d).map((r) => ({ material: r.name, stock_kg: Math.round(r.stock), purchased_kg: Math.round(r.purchased), sold_kg: Math.round(r.sold), produced_kg: Math.round(r.produced) })) };
   if (rep === "heats") { const rows = liveProduction(d).filter(inRange); return { status: "ok", report: rep, from, to, heats: rows.length, total_output_kg: Math.round(rows.reduce((s, p) => s + p.totalKg, 0)), recent: [...rows].sort((x, y) => y.date.localeCompare(x.date)).slice(0, 5).map((p) => ({ date: p.date, output_kg: Math.round(p.totalKg), input_kg: Math.round(p.inputKg ?? p.totalKg) })) }; }
-  if (rep === "cheques") { const rows = liveEntries(d).filter((e) => !!e.chequeStatus); return { status: "ok", report: rep, pending: rows.filter((e) => e.chequeStatus === "pending").map((e) => entryRow(d, e)).slice(0, 10), pending_count: rows.filter((e) => e.chequeStatus === "pending").length }; }
+  if (rep === "cheques") { const rows = liveEntries(d).filter((e) => !!e.chequeStatus); return { status: "ok", report: rep, pending: rows.filter((e) => e.chequeStatus === "pending").map((e) => entryRow(d, e)).slice(0, 10), pending_count: rows.filter((e) => e.chequeStatus === "pending").length, pending_total: rows.filter((e) => e.chequeStatus === "pending").reduce((s, e) => s + e.amount, 0) }; }
   if (rep === "workers") { const month = today.slice(0, 7); return { status: "ok", report: rep, month, workers: liveAccounts(d).filter((x) => x.type === "worker").map((w) => ({ name: w.name, ...workerMonth(d, w.id, month), advance_outstanding: Math.max(0, accountBalance(d, w.id)) })) }; }
-  if (rep === "receivables" || rep === "payables") { const rows = liveAccounts(d).filter((x) => !x.equity && x.type !== "worker").map((x) => ({ name: x.name, balance: accountBalance(d, x.id) })).filter((r) => (rep === "receivables" ? r.balance > 0 : r.balance < 0)).sort((x, y) => Math.abs(y.balance) - Math.abs(x.balance)); return { status: "ok", report: rep, accounts: rows.slice(0, 15).map((r) => ({ name: r.name, amount: Math.abs(r.balance) })), count: rows.length }; }
-  if (rep === "cash") return { status: "ok", report: rep, funds: fundList(d).map((f) => ({ name: f.name, balance: f.closing })) };
+  if (rep === "receivables" || rep === "payables") { const rows = liveAccounts(d).filter((x) => !x.equity && x.type !== "worker").map((x) => ({ name: x.name, balance: accountBalance(d, x.id) })).filter((r) => (rep === "receivables" ? r.balance > 0 : r.balance < 0)).sort((x, y) => Math.abs(y.balance) - Math.abs(x.balance)); return { status: "ok", report: rep, accounts: rows.slice(0, 15).map((r) => ({ name: r.name, amount: Math.abs(r.balance) })), count: rows.length, total: rows.reduce((s, r) => s + Math.abs(r.balance), 0), note: "total is the sum of ALL these accounts, computed by the app; read it, never add the listed amounts yourself" }; }
+  if (rep === "cash") { const funds = fundList(d); return { status: "ok", report: rep, funds: funds.map((f) => ({ name: f.name, balance: f.closing })), total: funds.reduce((s, f) => s + f.closing, 0) }; }
   return { status: "unknown_report", available: REPORTS };
 }
 
@@ -335,7 +402,7 @@ export function formSpecTool(a: Args): ToolResult {
   return { status: "ok", entry_type: t, label: ENTRY_TYPES[t].label, required_and_optional: spec[t] };
 }
 export function listTool(d: Data, what: string): ToolResult {
-  if (what === "banks") return { status: "ok", banks: liveBanks(d).map((b) => b.name), note: "Cash in hand is separate; these are the only banks you may offer." };
+  if (what === "banks") return { status: "ok", banks: bankChoices(d).map((b) => b.name), note: "Any of these banks may be used; a bank not used before is added automatically. Cash in hand is separate." };
   if (what === "materials") return { status: "ok", materials: d.materials.map((m) => m.name) };
   if (what === "categories") return { status: "ok", categories: d.categories.filter((c) => c.selectable !== false).map((c) => c.name) };
   return { status: "ok", account_types: ["Buyer", "Supplier", "Worker", ...d.accountTypes.map((t) => t.name)] };

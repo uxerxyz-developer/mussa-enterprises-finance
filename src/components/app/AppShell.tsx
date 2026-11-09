@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { GeminiLiveWorkspaceBar } from "./voice/GeminiLiveWorkspaceBar";
 import { useGeminiLive, type PendingDraft } from "@/hooks/useGeminiLive";
-import { accountBalanceTool, draftRows, entryPayload, findAccountTool, formSpecTool, lastTransactionTool, listTool, overviewTool, reportTool, searchEntriesTool, validateAccountDraft, validateEntryDraft, type AccountDraft, type EntryDraft } from "@/lib/voice-tools";
+import { accountBalanceTool, draftRows, entryPayload, findAccountTool, formSpecTool, lastTransactionTool, listTool, overviewTool, money, reportTool, searchEntriesTool, validateAccountDraft, validateEntryDraft, withSpoken, type AccountDraft, type EntryDraft } from "@/lib/voice-tools";
 import { Link, Outlet, useLocation, useNavigate, useRouter } from "@tanstack/react-router";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import {
   LayoutDashboard, ListOrdered, Users, BookOpen, Receipt, Wallet, ShieldCheck, Settings, LogOut, Search, Menu, Lock, Moon, Sun, ShoppingCart, BadgeDollarSign, HandCoins, RefreshCw, CloudUpload, Flame, Zap, Boxes, FileText, Pencil, Check, Mic, Palette,
 } from "lucide-react";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { AccountSearch, Field, TitleInput } from "./inputs";
-import { accountBalance, addAccount, addEntry, initials, type EntryType, changePassword, checkPw, ENTRY_TYPES, findDuplicate, getData, liveBanks, loadData, searchAccounts, matchesRecovery, redo, setupAuth, takeSnapshot, undo, useData, useLoaded } from "@/lib/db";
+import { accountBalance, addAccount, addBank, addEntry, initials, type EntryType, changePassword, checkPw, ENTRY_TYPES, findDuplicate, getData, liveAccounts, liveBanks, loadData, searchAccounts, matchesRecovery, redo, setupAuth, takeSnapshot, undo, useData, useLoaded } from "@/lib/db";
 import { norm, todayISO } from "@/lib/format";
 import { Logo } from "@/components/app/Logo";
 import { mussaMark, whiteLogo } from "@/lib/logo-images";
@@ -192,14 +192,23 @@ function Shell({ onLogout, dark, onToggleTheme }: { onLogout: (full?: boolean) =
     } catch { /* storage unavailable: keep the current page */ return; }
     if (window.location.pathname !== "/") router.history.replace("/");
   }, [router]);
-  // Hide the floating bottom bar while a text field is focused (on-screen keyboard).
+  // Hide the floating bottom bar only while the on-screen keyboard is really open (a text field has focus AND the visible
+  // area has shrunk), and re-check on every page change, so a focused field alone (for example the Admin PIN) never leaves it hidden.
   useEffect(() => {
     const root = document.documentElement;
-    const on = (e: FocusEvent) => { const t = e.target as HTMLElement | null; if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) root.dataset["kbd"] = "1"; };
-    const off = () => { delete root.dataset["kbd"]; };
-    document.addEventListener("focusin", on); document.addEventListener("focusout", off);
-    return () => { document.removeEventListener("focusin", on); document.removeEventListener("focusout", off); delete root.dataset["kbd"]; };
-  }, []);
+    const vv = window.visualViewport;
+    const update = () => {
+      const t = document.activeElement as HTMLElement | null;
+      const field = !!t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
+      const shrunk = vv ? vv.height < window.innerHeight - 120 : true;
+      if (field && shrunk) root.dataset["kbd"] = "1"; else delete root.dataset["kbd"];
+    };
+    const later = () => { window.setTimeout(update, 60); };
+    document.addEventListener("focusin", later); document.addEventListener("focusout", later);
+    vv?.addEventListener("resize", update);
+    update();
+    return () => { document.removeEventListener("focusin", later); document.removeEventListener("focusout", later); vv?.removeEventListener("resize", update); delete root.dataset["kbd"]; };
+  }, [pathname]);
   const { editing } = useDashboard();
   const onDashboard = pathname === "/";
   const canEditLayout = onDashboard || editing;
@@ -562,7 +571,7 @@ function MicButton() {
       const v = getVoiceSettings().settings;
       const ctx = resumeContextRef.current;
       resumeContextRef.current = null;
-      return { voice: v.voice, extraInstruction: voiceInstruction(v, todayISO()), greeting: ctx ? null : voiceGreeting(v), greetingKey: `${v.voice}|${v.language}`, initialContext: ctx };
+      return { voice: v.voice, extraInstruction: voiceInstruction(v, todayISO(), liveAccounts(getData()).filter((x) => !x.equity).map((x) => x.name)), greeting: ctx ? null : voiceGreeting(v), greetingKey: `${v.voice}|${v.language}|${v.greeting.trim()}`, initialContext: ctx };
     },
     onToolCall: (name, args) => toolRef.current(name, args),
   });
@@ -597,9 +606,14 @@ function MicButton() {
         if (!opts.interactive) return { status: "possible_duplicate", voucher: dup.voucherNo, instruction: "A similar entry (same account, amount and date) already exists. Tell the user and ask if they still want to save; if yes call confirm_pending with force true." };
         if (!confirm(`A similar entry (V-${dup.voucherNo}) already exists for the same account, amount and date. Save anyway?`)) return { status: "cancelled" };
       }
+      // A bank picked from the built-in list that was never used before is created now, the same way the entry form does it.
+      if (x.method && x.method !== "cash" && x.bankName && !x.bankId) {
+        const have = liveBanks(getData()).find((b) => b.name.toLowerCase() === x.bankName!.toLowerCase());
+        x.bankId = (have ?? addBank({ name: x.bankName, openingBalance: 0 })).id;
+      }
       const e = addEntry(entryPayload(x));
       flashEntry(e.id);
-      toast.success(`Voucher V-${e.voucherNo} saved${x.accountName ? `: ${x.accountName}` : ""}, Rs. ${x.amount.toLocaleString()}`, {
+      toast.success(`Voucher V-${e.voucherNo} saved${x.accountName ? `: ${x.accountName}` : ""}, ${money(x.amount)}`, {
         action: { label: "Undo", onClick: () => { toast(undo() ? "Undone" : "Nothing to undo"); } },
       });
       setCurrentDraft(null);
@@ -613,7 +627,7 @@ function MicButton() {
   };
 
   /** Every tool the assistant can call. Lookups read the live data; drafts are validated by the same rules as the entry form. */
-  toolRef.current = (name, args) => {
+  const runTool = (name: string, args: Record<string, unknown>): ToolOut => {
     const d = getData();
     const today = todayISO();
     const text = (k: string) => (typeof args[k] === "string" ? (args[k] as string) : "");
@@ -648,6 +662,8 @@ function MicButton() {
       default: return { status: "unknown_tool", name };
     }
   };
+  // Every money field in an answer also carries its Pakistani-grouped text and spoken words, so the assistant never converts digits itself.
+  toolRef.current = (name, args) => withSpoken(runTool(name, args));
 
   // Closing ends the session and clears the conversation, but an unfinished draft is kept for 10 minutes.
   const close = () => { stopSession(); setResumeAsk(false); setOpen(false); playSound("micOff"); };
@@ -674,8 +690,9 @@ function MicButton() {
       const x = p.draft;
       const rows: Array<[string, string]> = [["Name", x.name], ["Type", x.typeLabel]];
       if (x.phone) rows.push(["Phone", x.phone]);
-      if (x.openingBalance) rows.push(["Opening balance", `Rs. ${x.openingBalance.toLocaleString()}`]);
-      if (x.fixedWages) rows.push(["Monthly wages", `Rs. ${x.fixedWages.toLocaleString()}`]);
+      if (x.address) rows.push(["Address", x.address]);
+      if (x.openingBalance) rows.push(["Opening balance", `${money(Math.abs(x.openingBalance))} ${x.openingSide === "payable" ? "payable (we owe)" : "receivable (they owe us)"}`]);
+      if (x.fixedWages) rows.push(["Monthly wages", money(x.fixedWages)]);
       return { title: "New Account", type: "New account", rows };
     }
     const x = p.draft;
@@ -712,7 +729,6 @@ function SyncButton() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const run = async () => {
-    if (!import.meta.env["VITE_SUPABASE_URL"] || !import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"]) { toast("Cloud backup is not set up — use file backup in Settings"); navigate({ to: "/settings" }); return; }
     const { data } = await supabase.auth.getSession();
     if (!data.session) { toast("Sign in to Cloud Backup to sync"); navigate({ to: "/settings" }); return; }
     if (!navigator.onLine) { toast.error("You are offline — backup will run when back online"); return; }

@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 /** Signature of the app version: the script files the page loads change on every publish. */
 const sig = (html: string) => (html.match(/\/assets\/[^"' ]+\.js/g) ?? []).sort().join("|");

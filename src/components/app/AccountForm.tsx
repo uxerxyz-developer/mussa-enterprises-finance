@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ConfirmSave, type ConfirmRow } from "./ConfirmSave";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { fieldError } from "@/lib/field-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

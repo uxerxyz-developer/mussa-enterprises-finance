@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { playSound } from "@/lib/sounds";
 
 /** Shows an error, vibrates on phones and highlights the field with the given id. */

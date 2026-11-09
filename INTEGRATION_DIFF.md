@@ -1,7 +1,12 @@
-# INTEGRATION_DIFF.md — v1.6.6
+# INTEGRATION_DIFF.md — v1.6.7
 
 Reference only: every change below is already applied inside this project; nothing has to be merged by hand. See CHANGELOG.md for the version history.
 Compared with v1.0.0 (your original upload): 12 files changed, 10 new files. `src/lib/db.ts`, accounting math, voice files, transaction labels, Cheque Status, "This month" and `PrintHeader` are untouched.
+
+## R. Voice accuracy, Sileo, Admin (v1.6.7)
+- `voice-tools.ts` (money/words/parts helpers, `withSpoken`, `bankChoices`, guided account draft, report totals), `fuzzy.ts` (Urdu-script query), `gemini-live.functions.ts` (instruction + schema), `voice-settings.ts` (greeting field, names in instruction), `useGeminiLive.ts` (temperature), `AppShell.tsx` (dispatcher wrapper, bank creation on save, draft card, keyboard flag, imports).
+- New: `voice-preview.ts`, `lib/toast.ts`, `components/ui/toaster.tsx`; `VoiceSettings.tsx` (preview buttons, greeting field); 17 files now import `toast` from `@/lib/toast`; `__root.tsx` uses the new Toaster; `package.json` (+ sileo).
+- `EntryForm.tsx` bank dropdown (no group headings); `routes/admin.tsx` (Danger Zone button, scrollable tabs); `SidebarNav.tsx` + `styles.css` (System group colours).
 
 ## Q. App-like feel, sidebar, PIN feedback, sounds (v1.6.6)
 - `styles.css`: new blocks at the end (app-like feel, shake and `input.field-error`, sidebar). `__root.tsx`: context-menu and drag handlers.

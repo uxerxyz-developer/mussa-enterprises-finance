@@ -75,7 +75,11 @@ describe("entry drafts follow the form rules", () => {
   it("cheque needs a bank from the list and a cheque number", () => {
     const base = { type: "outward", party_name: "ali traders", amount: 5000, payment_method: "cheque" };
     expect((vt.validateEntryDraft(getData(), base, TODAY) as any).missing.join(" ")).toContain("bank_name");
-    expect((vt.validateEntryDraft(getData(), { ...base, bank_name: "Allied" }, TODAY) as any).status).toBe("bank_not_found");
+    expect((vt.validateEntryDraft(getData(), { ...base, bank_name: "Zzzq Finance" }, TODAY) as any).status).toBe("bank_not_found");
+    // a built-in bank that was never used before is accepted too (it is created when the entry is saved)
+    const allied = vt.validateEntryDraft(getData(), { ...base, bank_name: "Allied" }, TODAY) as any;
+    expect(allied.status).not.toBe("bank_not_found");
+    expect(vt.listTool(getData(), "banks")).toMatchObject({ banks: expect.arrayContaining(["Meezan Bank", "Bank Alfalah"]) });
     const r = vt.validateEntryDraft(getData(), { ...base, bank_name: "mezan bank" }, TODAY) as any;
     expect(r.missing.join(" ")).toContain("cheque_no");
     const ok = vt.validateEntryDraft(getData(), { ...base, bank_name: "mezan bank", cheque_no: "123456" }, TODAY) as any;
@@ -127,9 +131,48 @@ describe("account drafts", () => {
     const d = getData();
     expect((vt.validateAccountDraft(d, { name: "New Co" }) as any).missing.join(" ")).toContain("type");
     expect((vt.validateAccountDraft(d, { name: "Al Fateh Steel", type: "supplier" }) as any).status).toBe("similar_account_exists");
-    const ok = vt.validateAccountDraft(d, { name: "Zain Brothers", type: "buyer", phone: "0300" }) as any;
+    // phone, address and opening balance are asked for unless the user skips them
+    expect((vt.validateAccountDraft(d, { name: "Zain Brothers", type: "buyer", phone: "0300" }) as any).status).toBe("ask_details");
+    const ok = vt.validateAccountDraft(d, { name: "Zain Brothers", type: "buyer", phone: "0300", skip_optional: true }) as any;
     expect(ok.ok).toBe(true);
     expect(ok.draft.type).toBe("buyer");
+  });
+  it("never guesses which way an opening balance runs, and stores payable as negative", () => {
+    const d = getData();
+    const base = { name: "Zain Brothers", type: "supplier", phone: "none", address: "none" };
+    expect((vt.validateAccountDraft(d, { ...base, opening_lakh: 1 }) as any).status).toBe("opening_side_needed");
+    const pay = vt.validateAccountDraft(d, { ...base, opening_lakh: 1, opening_side: "payable" }) as any;
+    expect(pay.draft.openingBalance).toBe(-100000);
+    const rec = vt.validateAccountDraft(d, { ...base, opening_balance: 250000, opening_side: "receivable" }) as any;
+    expect(rec.draft.openingBalance).toBe(250000);
+    expect((vt.validateAccountDraft(d, { ...base, opening_balance: 0 }) as any).draft.openingBalance).toBe(0);
+  });
+});
+
+describe("amounts", () => {
+  it("groups the Pakistani way and speaks lakh and crore", () => {
+    expect(vt.money(1479640)).toBe("Rs 14,79,640");
+    expect(vt.money(-4000000)).toBe("Rs -40,00,000");
+    expect(vt.speakAmount(1479640)).toBe("14 lakh 79 hazar 640 rupay");
+    expect(vt.speakAmount(15000000)).toBe("1 crore 50 lakh rupay");
+    expect(vt.speakAmount(100000)).toBe("1 lakh rupay");
+  });
+  it("sums an amount given in parts", () => {
+    expect(vt.partsAmount({ amount_crore: 1, amount_lakh: 50 })).toBe(15000000);
+    expect(vt.partsAmount({ opening_lakh: 5, opening_thousand: 25 }, "opening")).toBe(525000);
+    expect(vt.partsAmount({ amount: 5000 })).toBeUndefined();
+  });
+  it("adds spoken text to every money field but not to weights or counts", () => {
+    const out = vt.withSpoken({ total: 1479640, total_kg: 5000, count: 3, accounts: [{ name: "A", amount: 100000 }] }) as any;
+    expect(out.total_words).toBe("14 lakh 79 hazar 640 rupay");
+    expect(out.total_text).toBe("Rs 14,79,640");
+    expect(out.total_kg_words).toBeUndefined();
+    expect(out.count_words).toBeUndefined();
+    expect(out.accounts[0].amount_words).toBe("1 lakh rupay");
+  });
+  it("receivable and payable reports carry a total over every account", () => {
+    const r = vt.reportTool(getData(), { report: "receivables" }, TODAY) as any;
+    expect(r).toHaveProperty("total");
   });
 });
 
