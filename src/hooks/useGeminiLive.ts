@@ -322,6 +322,7 @@ export function useGeminiLive(options: UseGeminiLiveOptions = {}) {
             model: config.model,
             generationConfig: {
               responseModalities: ["AUDIO"],
+              temperature: 0.3,
               speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: sc?.voice ?? "Puck" } } },
             },
             systemInstruction: sc?.extraInstruction

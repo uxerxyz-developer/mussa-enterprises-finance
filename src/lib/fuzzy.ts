@@ -2,6 +2,8 @@
  * Spelling-tolerant matching for spoken (Roman Urdu) names: "alfateh", "alfatah" and "Al Fateh" all find
  * "Al Fateh Steel Industries". Pure functions, no browser APIs.
  */
+import { romanize } from "./romanize";
+
 const STOP = new Set(["al", "e", "ul", "ud", "ka", "ki", "ke", "and", "the"]);
 
 /** Lower-case, letters and digits only, a few Roman-Urdu spelling folds. */
@@ -50,6 +52,7 @@ const meaningful = (ws: string[]) => { const m = ws.filter((w) => !STOP.has(w));
 
 /** 0..1 similarity between what was said and a stored name. */
 export function nameScore(query: string, name: string): number {
+  if (/[\u0600-\u06FF]/.test(query)) query = romanize(query); // a name heard in Urdu script is matched in Roman letters
   const qw = words(query), cw = words(name);
   const q = meaningful(qw), c = meaningful(cw);
   if (!q.length || !c.length) return 0;

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Printer, Share2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { shareElementAsImage } from "@/lib/share-pdf";
 import { Button } from "@/components/ui/button";
 import { PrintHeader } from "@/components/app/inputs";

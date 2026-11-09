@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { flashEntry } from "@/lib/row-flash";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { fieldError } from "@/lib/field-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -318,8 +318,8 @@ export function EntryForm({ initial, onSaved, defaultType = "inward", defaultAcc
                   setBankId(v); setBank(d.banks.find((b) => b.id === v)?.name ?? "");
                 }}>
                   <option value="" disabled>Select bank…</option>
-                  {liveBanks(d).length > 0 && <optgroup label="My accounts">{liveBanks(d).map((b) => <option key={b.id} value={b.id}>{b.name}{b.accountNo ? ` · ${b.accountNo}` : ""}</option>)}</optgroup>}
-                  <optgroup label="Pakistani banks">{PK_BANKS.filter((n) => !liveBanks(d).some((b) => b.name === n)).map((n) => <option key={n} value={`pk:${n}`}>{n}</option>)}</optgroup>
+                  {liveBanks(d).map((b) => <option key={b.id} value={b.id}>{b.name}{b.accountNo ? ` · ${b.accountNo}` : ""}</option>)}
+                  {PK_BANKS.filter((n) => !liveBanks(d).some((b) => b.name === n)).map((n) => <option key={n} value={`pk:${n}`}>{n}</option>)}
                 </NativeSelect>
                 <Button type="button" variant="outline" size="sm" className="h-9" onClick={async () => {
                   const name = await names.ask("New bank account", "e.g. Meezan Bank");

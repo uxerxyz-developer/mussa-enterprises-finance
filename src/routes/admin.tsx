@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { AlertTriangle, Download, Lock, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,10 +86,10 @@ function AdminPanel() {
 
   return (
     <div>
-      <PageHeader title="Admin Panel" subtitle="Nothing is permanently deleted — everything can be restored from the Recycle Bin." />
+      <PageHeader title="Admin Panel" subtitle="Nothing is permanently deleted — everything can be restored from the Recycle Bin." actions={<DangerZone />} />
       <Input className="mb-4 max-w-sm" placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} />
       <Tabs defaultValue="entries">
-        <TabsList>
+        <TabsList className="max-w-full justify-start overflow-x-auto">
           <TabsTrigger value="entries">Entries ({entries.length})</TabsTrigger>
           <TabsTrigger value="accounts">Accounts ({accounts.length})</TabsTrigger>
           <TabsTrigger value="log">Recycle Bin & Audit Log ({d.log.filter((l) => !l.restoredAt).length})</TabsTrigger>
@@ -155,8 +155,6 @@ function AdminPanel() {
         </TabsContent>
       </Tabs>
 
-      <DangerZone />
-
       <Dialog open={!!editAcc} onOpenChange={(o) => !o && setEditAcc(undefined)}>
         <DialogContent className="sm:max-w-2xl"><DialogHeader><DialogTitle>Edit Account</DialogTitle></DialogHeader>{editAcc && <AccountForm initial={editAcc} onSaved={() => setEditAcc(undefined)} />}</DialogContent>
       </Dialog>
@@ -168,6 +166,7 @@ function AdminPanel() {
 }
 
 function DangerZone() {
+  const [info, setInfo] = useState(false);
   const [open, setOpen] = useState(false);
   const [word, setWord] = useState("");
   const [pin, setPin] = useState("");
@@ -192,13 +191,18 @@ function DangerZone() {
     window.location.href = "/";
   };
   return (
-    <section className="mt-10 rounded-xl border-2 border-destructive/50 bg-danger-soft p-5">
-      <div className="flex items-center gap-2 text-lg font-semibold text-destructive"><AlertTriangle className="h-5 w-5" /> Danger Zone</div>
-      <p className="mt-1 text-sm text-muted-foreground">Erase the whole app and all its data on this device. Your theme is kept. Download a backup first.</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button variant="outline" onClick={download}><Download /> Download backup</Button>
-        <Button variant="destructive" onClick={() => { setWord(""); setPin(""); setOpen(true); }}><Trash2 /> Reset entire app</Button>
-      </div>
+    <>
+      <Button variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setInfo(true)}><AlertTriangle /> Danger Zone</Button>
+      <Dialog open={info} onOpenChange={setInfo}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-destructive"><AlertTriangle className="h-5 w-5" /> Danger Zone</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Erase the whole app and all its data on this device. Your theme is kept. Download a backup first.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={download}><Download /> Download backup</Button>
+            <Button variant="destructive" onClick={() => { setInfo(false); setWord(""); setPin(""); setOpen(true); }}><Trash2 /> Reset entire app</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle className="text-destructive">Reset entire app</DialogTitle></DialogHeader>
@@ -213,6 +217,6 @@ function DangerZone() {
           </div>
         </DialogContent>
       </Dialog>
-    </section>
+    </>
   );
 }

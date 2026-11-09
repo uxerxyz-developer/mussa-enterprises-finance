@@ -10,6 +10,7 @@ export type NavGroup = { title: string; items: readonly NavItem[] };
 const ACCENT: Record<string, string> = {
   "/production": "var(--qa-heat)", "/sales": "var(--qa-sale)", "/purchases": "var(--qa-purchase)", "/accounts": "var(--qa-account)",
   "/expenses": "var(--qa-expense)", "/cashbook": "var(--qa-receive)", "/banks": "var(--tre-bank)",
+  "/admin": "var(--nv-admin)", "/settings": "var(--nv-system)",
 };
 const isActive = (to: string, pathname: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
 
@@ -57,6 +58,7 @@ export function NavAccordion({ groups, onNavigate, wrap }: { groups: readonly Na
           <div key={g.title} className="nav-group pb-0.5">
             <button
               type="button"
+              data-group={g.title === "System & Administration" ? "system" : undefined}
               aria-expanded={isOpen}
               aria-controls={panelId}
               onClick={() => setOpen((o) => (o[g.title] ? {} : { [g.title]: true }))}
