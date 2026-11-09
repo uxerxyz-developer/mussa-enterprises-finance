@@ -92,7 +92,7 @@ export function EntriesTable({
                   {e.method ? METHODS[e.method] : "—"}
                   {e.chequeNo && <div className="num text-muted-foreground">#{e.chequeNo} · <span className={cn(e.chequeStatus === "bounced" && "text-destructive", e.chequeStatus === "cleared" && "text-success")}>{e.chequeStatus}</span></div>}
                 </td>
-                <td className="px-3 py-2 text-right font-medium"><Amount value={e.amount} flow={ENTRY_TYPES[e.type].flow} /></td>
+                <td className={cn("px-3 py-2 text-right font-medium", e.chequeStatus === "bounced" && "line-through")}><Amount value={e.amount} flow={ENTRY_TYPES[e.type].flow} /></td>
                 <td className="no-print px-2" onClick={(ev) => ev.stopPropagation()}>
                   <Link to="/voucher/$id" params={{ id: e.id }} title="Print voucher" className="text-muted-foreground hover:text-primary"><Printer className="h-4 w-4" /></Link>
                 </td>

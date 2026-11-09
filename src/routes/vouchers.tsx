@@ -63,7 +63,9 @@ function Vouchers() {
                 <div className="truncate font-semibold">{party ?? ENTRY_TYPES[e.type].label}</div>
                 <div className="select-text truncate text-xs text-muted-foreground">V-{e.voucherNo} · {e.type === "inward" ? "Received" : e.type === "outward" ? "Issued" : ENTRY_TYPES[e.type].label} · {fmtDate(e.date)}</div>
               </div>
-              <div className={cn("num shrink-0 text-sm font-semibold", flow === "in" && "text-success", flow === "out" && "text-destructive", e.type === "sale" && "text-sale", e.type === "purchase" && "text-purchase")}>{fmtPKR(e.amount)}</div>
+              {e.chequeStatus === "bounced"
+                ? <div className="shrink-0 text-right"><div className="num text-sm font-semibold text-destructive line-through">{fmtPKR(e.amount)}</div><span className="inline-flex rounded bg-danger-soft px-1.5 py-0.5 text-[10px] font-medium uppercase text-destructive">Bounced</span></div>
+                : <div className={cn("num shrink-0 text-sm font-semibold", flow === "in" && "text-success", flow === "out" && "text-destructive", e.type === "sale" && "text-sale", e.type === "purchase" && "text-purchase")}>{fmtPKR(e.amount)}</div>}
             </Link>
           );
         })}

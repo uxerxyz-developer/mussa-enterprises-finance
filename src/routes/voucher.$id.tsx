@@ -103,6 +103,7 @@ function VoucherPage() {
       </div>
       <div ref={ref} className="print-area rounded-lg border bg-card p-8">
         <PrintHeader always title={title} sub={`V-${e.voucherNo}`} />
+        {e.chequeStatus === "bounced" && <div className="mb-3 rounded bg-danger-soft px-3 py-1.5 text-sm font-medium text-destructive">Cheque BOUNCED — this voucher has no effect on the party balance.</div>}
         {e.deletedAt && <div className="mb-3 rounded bg-danger-soft px-3 py-1.5 text-sm text-destructive">This voucher has been deleted.</div>}
         <Row label="Date / Time" value={`${fmtDate(e.date)} · ${fmtTime(e.createdAt)}`} />
         <Row label={meta.flow === "in" ? "Received From" : meta.flow === "out" ? "Paid To" : "Account"} value={a ? `${a.name} (${a.code})` : undefined} />
@@ -116,7 +117,7 @@ function VoucherPage() {
           const eff = signedForAccount(e);
           const cur = previousBalance + eff;
           const bt = (b: number) => `${fmtPKR(Math.abs(b))} · ${balanceClass(a, b)}${b > 0 ? " (Dr)" : b < 0 ? " (Cr)" : ""}`;
-          const effText = e.deletedAt ? "Deleted — no effect" : eff === 0 ? "No change to balance" : `${eff > 0 ? "+" : "−"} ${fmtPKR(Math.abs(eff))}`;
+          const effText = e.deletedAt ? "Deleted — no effect" : e.chequeStatus === "bounced" ? "Cheque bounced — balance unchanged" : eff === 0 ? "No change to balance" : `${eff > 0 ? "+" : "−"} ${fmtPKR(Math.abs(eff))}`;
           return <>
             <Row label="Previous Balance" value={bt(previousBalance)} />
             <Row label="This Voucher" value={effText} />
@@ -126,8 +127,9 @@ function VoucherPage() {
         <div className="mt-6 rounded-md bg-surface p-4">
           <div className="flex items-baseline justify-between">
             <span className="text-sm uppercase tracking-wide text-muted-foreground">Amount</span>
-            <span className="num text-2xl font-bold">{fmtPKR(e.amount)}</span>
+            <span className={e.chequeStatus === "bounced" ? "num text-2xl font-bold text-destructive line-through" : "num text-2xl font-bold"}>{fmtPKR(e.amount)}</span>
           </div>
+          {e.chequeStatus === "bounced" && <div className="mt-1 text-right text-xs font-semibold uppercase text-destructive">Cheque Bounced</div>}
           <div className="mt-1 text-right text-sm italic">{amountInWords(e.amount)}</div>
         </div>
         <div data-share-hide className="print-sign mt-20 grid grid-cols-3 gap-6 text-center text-xs">
