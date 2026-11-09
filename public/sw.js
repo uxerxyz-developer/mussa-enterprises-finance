@@ -6,7 +6,7 @@
  *  - /api/*, /_serverFn*, /_server/*, WebSockets, Supabase, Gemini: Network-ONLY (bypass)
  */
 
-const VERSION    = 'v1.0.0'; // ⬅️ har deploy pe bump karo
+const VERSION    = 'v1.0.1'; // ⬅️ har deploy pe bump karo
 const PRECACHE   = `mussa-precache-${VERSION}`;
 const RUNTIME    = `mussa-runtime-${VERSION}`;
 const FONTS      = `mussa-fonts-${VERSION}`;
