@@ -168,7 +168,7 @@ export interface Data {
   seq: number;
   voucherSeq: number;
   company: { name: string; address: string; phone: string };
-  auth?: { username: string; hash: string; mode?: "password" | "pin"; recoveryEmail?: string; recoveryPhone?: string } | undefined;
+  auth?: { username: string; hash: string; mode?: "password" | "pin"; pinLength?: number; recoveryEmail?: string; recoveryPhone?: string } | undefined;
 }
 
 export const ENTRY_TYPES: Record<EntryType, { label: string; action?: string; cash: boolean; party: boolean; flow: "in" | "out" | "none" }> = {
@@ -349,10 +349,10 @@ export async function hashPw(pw: string) {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
-export async function setupAuth(username: string, pin: string, companyName: string, recoveryEmail = "", recoveryPhone = "") {
+export async function setupAuth(username: string, pin: string, companyName: string, recoveryEmail = "", recoveryPhone = "", mode: "pin" | "password" = "pin") {
   const hash = await hashPw(pin);
   commit((d) => {
-    d.auth = { username, hash, mode: "pin", recoveryEmail, recoveryPhone };
+    d.auth = { username, hash, mode, ...(mode === "pin" ? { pinLength: pin.length } : {}), recoveryEmail, recoveryPhone };
     if (companyName) d.company.name = companyName;
   }, false);
 }
@@ -367,7 +367,7 @@ export function updateCompany(c: Data["company"]) {
   }, false);
 }
 export function updateRecovery(recoveryEmail: string, recoveryPhone: string) {
-  commit((d) => { if (d.auth) Object.assign(d.auth, { recoveryEmail, recoveryPhone, mode: "pin" }); }, false);
+  commit((d) => { if (d.auth) Object.assign(d.auth, { recoveryEmail, recoveryPhone }); }, false);
 }
 export function matchesRecovery(value: string) {
   const n = norm(value);
@@ -870,7 +870,11 @@ export function restoreSnapshot(at: string) {
   const parsed = JSON.parse(s.data);
   commit((d) => { Object.assign(d, { ...empty(), ...parsed, auth: d.auth }); migrate(d); });
 }
-export async function changePassword(pin: string) {
-  const hash = await hashPw(pin);
-  commit((d) => { if (d.auth) { d.auth.hash = hash; d.auth.mode = "pin"; } }, false);
+export async function changePassword(secret: string, mode: "pin" | "password" = /^\d+$/.test(secret) ? "pin" : "password") {
+  const hash = await hashPw(secret);
+  commit((d) => { if (d.auth) { d.auth.hash = hash; d.auth.mode = mode; if (mode === "pin") d.auth.pinLength = secret.length; else delete d.auth.pinLength; } }, false);
+}
+/** An older PIN has no stored length; the first successful sign-in records it so the PIN boxes can be used from then on. */
+export function rememberPinLength(length: number) {
+  commit((d) => { if (d.auth && d.auth.mode !== "password" && !d.auth.pinLength) d.auth.pinLength = length; }, false);
 }

@@ -42,6 +42,19 @@ export function activitySeries(funds: FundRows[], today: string, max = 12): numb
   return out.slice(-max);
 }
 
+/** Combined balance at the end of each of the last `days` days (carried forward on quiet days), sampled to `samples` points. */
+export function dailySeries(funds: FundRows[], today: string, days = 30, samples = 10): number[] {
+  const dates = [...new Set(funds.flatMap((f) => f.rows.map((r) => r.e.date)).filter((d) => d <= today))].sort();
+  const start = funds.reduce((t, f) => t + f.opening, 0);
+  const after = balanceSeries(funds, dates);
+  const balanceOn = (iso: string) => { let v = start; for (let i = 0; i < dates.length && dates[i]! <= iso; i++) v = after[i]!; return v; };
+  const [y, m, d] = today.split("-").map(Number) as [number, number, number];
+  const isoOf = (back: number) => { const x = new Date(y, m - 1, d - back); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
+  const out: number[] = [];
+  for (let i = 0; i < samples; i++) out.push(balanceOn(isoOf(Math.round(((samples - 1 - i) * (days - 1)) / (samples - 1)))));
+  return out;
+}
+
 /** Smooth SVG line through the values inside a w x h box, plus the end point and its direction (degrees) for an arrow head. */
 export function smoothPath(values: number[], w: number, h: number, pad_ = 3): { d: string; end: { x: number; y: number; angle: number } | null } {
   if (values.length < 2) return { d: "", end: null };

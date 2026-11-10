@@ -142,6 +142,32 @@ export function useGeminiLive(options: UseGeminiLiveOptions = {}) {
     }
   }, []);
 
+  /** Plays the saved greeting as a single buffer (no joins between chunks), starting a moment after the audio device wakes. */
+  const playGreetingOnce = useCallback((chunks: string[], mimeType?: string) => {
+    try {
+      const ctx = audioContextOutRef.current;
+      if (!ctx) return;
+      if (ctx.state === "suspended") void ctx.resume();
+      const rate = Number(/rate=(\d+)/.exec(mimeType ?? "")?.[1]) || DEFAULT_OUT_RATE;
+      const parts = chunks.map((c) => { const b = atob(c); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; });
+      const total = parts.reduce((n, p) => n + (p.length >> 1), 0);
+      const float32 = new Float32Array(total);
+      let at = 0;
+      for (const p of parts) { const i16 = new Int16Array(p.buffer, 0, p.length >> 1); for (let i = 0; i < i16.length; i++) { const v = i16[i] ?? 0; float32[at++] = v / (v < 0 ? 32768 : 32767); } }
+      const buffer = ctx.createBuffer(1, total, rate);
+      buffer.copyToChannel(float32, 0);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      scheduledTimeRef.current = Math.max(scheduledTimeRef.current, ctx.currentTime + 0.15);
+      source.start(scheduledTimeRef.current);
+      scheduledTimeRef.current += buffer.duration;
+      playingRef.current.add(source);
+      setIsSpeaking(true);
+      source.onended = () => { playingRef.current.delete(source); if (ctx.currentTime >= scheduledTimeRef.current - 0.05) setIsSpeaking(false); };
+    } catch (e) { console.error("Greeting playback error:", e); }
+  }, []);
+
   const stopMicrophoneCapture = useCallback(() => {
     processorRef.current?.disconnect();
     processorRef.current = null;
@@ -267,14 +293,22 @@ export function useGeminiLive(options: UseGeminiLiveOptions = {}) {
     let outCtx: AudioContext | null = null;
     let inCtx: AudioContext | null = null;
     let micPromise: Promise<MediaStream>;
+    let startMic: () => void = () => undefined;
+    let micStarted = false;
     try {
       const Ctor = audioCtor();
       outCtx = new Ctor(); // default rate; buffers of any rate are resampled automatically
       try { inCtx = new Ctor({ sampleRate: IN_RATE }); } catch { inCtx = new Ctor(); }
       void outCtx.resume();
       void inCtx.resume();
-      micPromise = navigator.mediaDevices.getUserMedia({
-        audio: { channelCount: 1, sampleRate: IN_RATE, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      micPromise = new Promise<MediaStream>((resolve, reject) => {
+        startMic = () => {
+          if (micStarted || intentionalCloseRef.current) return; // never open the microphone for a session that was already closed
+          micStarted = true;
+          navigator.mediaDevices.getUserMedia({
+            audio: { channelCount: 1, sampleRate: IN_RATE, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          }).then(resolve, reject);
+        };
       });
       audioContextOutRef.current = outCtx;
       audioContextInRef.current = inCtx;
@@ -285,16 +319,27 @@ export function useGeminiLive(options: UseGeminiLiveOptions = {}) {
       console.error(e);
       return;
     }
-    tick("tap: audio unlocked, mic requested");
+    tick("tap: audio unlocked");
 
     // 2) Start the server round-trip right away, and play the saved greeting at once (no waiting for the connection).
     const configPromise = getGeminiLiveConfig();
     const sc = optionsRef.current.getSessionConfig?.();
     let greetedLocally = false;
+    const cachedGreeting = sc?.greeting ? await loadGreeting(sc.greetingKey) : null;
+    let micGranted = false;
+    try { micGranted = (await navigator.permissions?.query({ name: "microphone" as PermissionName }))?.state === "granted"; } catch { /* not supported: ask for the mic at once */ }
+    // Opening the microphone makes the phone switch its audio mode, which breaks up playback. So when a saved greeting exists and the
+    // permission is already granted, the greeting plays first, alone, as one piece, and the microphone is opened as it ends.
+    if (!(cachedGreeting && micGranted)) startMic();
     if (sc?.greeting) {
-      const cached = await loadGreeting(sc.greetingKey);
+      const cached = cachedGreeting;
       if (cached) {
-        cached.chunks.forEach((c) => playIncomingPcmChunk(c, cached.mime));
+        playGreetingOnce(cached.chunks, cached.mime);
+        if (micGranted) {
+          const outCtx2 = audioContextOutRef.current;
+          const waitMs = outCtx2 ? Math.max(0, (scheduledTimeRef.current - outCtx2.currentTime) * 1000 - 250) : 0;
+          setTimeout(startMic, waitMs);
+        }
         gateUntilRef.current = scheduledTimeRef.current;
         greetedLocally = true;
         tick("saved greeting playing");
@@ -419,6 +464,7 @@ export function useGeminiLive(options: UseGeminiLiveOptions = {}) {
     } catch (err) {
       clearTimeout(connectTimerRef.current);
       wsRef.current = null;
+      micStarted = true;
       void micPromise.then((st) => st.getTracks().forEach((t) => t.stop())).catch(() => undefined);
       stopMicrophoneCapture();
       void audioContextOutRef.current?.close();
@@ -427,7 +473,7 @@ export function useGeminiLive(options: UseGeminiLiveOptions = {}) {
       const denied = err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "SecurityError");
       setError(denied ? "Microphone ki ijazat nahi mili. Browser ki settings mein allow karein." : "Connection nahi ban saka. Internet check karke dobara koshish karein.");
     }
-  }, [connecting, appendTranscript, failConnection, playIncomingPcmChunk, startCapture, stopMicrophoneCapture, stopPlayback]);
+  }, [connecting, appendTranscript, failConnection, playGreetingOnce, playIncomingPcmChunk, startCapture, stopMicrophoneCapture, stopPlayback]);
 
   // Idle guard: 2 minutes without activity (5 while a draft is waiting) ends the session.
   useEffect(() => {

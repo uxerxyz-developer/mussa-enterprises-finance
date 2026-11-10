@@ -1,9 +1,21 @@
 # CHANGELOG — Mussa Finance
 
-Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.7.zip`), in this file, and inside the app under **Settings & Backup → App version**.
+Every delivery has a version number: it is in the zip name (`mussa-finance-v1.6.8.zip`), in this file, and inside the app under **Settings & Backup → App version**.
 When something is wrong, tell me: **the version shown in Settings + the screen + what you did + a screenshot**. I will look only at the files listed for that version.
 
-## v1.6.7 — Voice assistant accuracy, Sileo notifications, Admin fixes (current)
+## v1.6.8 — New sign-in (6-digit PIN boxes or password), back-button behaviour, voice and display fixes (current)
+- **Sign-in and account creation** (`AuthInput.tsx` new, `AppShell.tsx` Login, `settings.tsx`, `db.ts` auth): when the account is created or the PIN is reset the user picks **6-digit PIN** or **Password**. PIN is entered in six animated boxes (pop and a light vibration per digit); when the last digit is filled it signs in by itself, no OK button. Password uses a normal field with a show / hide eye and Enter. The choice is remembered and the next sign-in shows the matching form. A wrong PIN or password shakes, turns red, clears and vibrates (as in v1.6.6). An older PIN of 4 to 8 digits keeps the single field until the first successful sign-in; that records its length and the boxes are used from then on. Settings: "Change PIN or Password" with the same choice. `db.ts`: `auth.pinLength`, `setupAuth` and `changePassword` take the mode, new `rememberPinLength`; updating the recovery details no longer resets the mode. Nothing in accounting changed.
+- **Back button**: the path bar (Back / Dashboard / page) is hidden on the Dashboard and works as before on every other page. The main menu and bottom bar now replace the current page instead of adding to the history, so Back no longer replays every page visited. On the Dashboard the first Back shows "Press back again to exit" and a second Back within 2 seconds leaves the app.
+- **Bank balance line** (`treasury-series.ts` `dailySeries`, `TreasuryViz.tsx`): drawn from the combined bank balance of the last 30 days (carried forward on quiet days) sampled to 10 points, lightly smoothed; nothing about 30 days is written on the card.
+- **Sidebar**: still two orbs, stronger (about 35%), the lower one moved to the lower middle, colours chosen per theme.
+- **Assistant greeting**: the saved greeting now plays as one piece, starting a moment after the audio device wakes, and the microphone is opened as it ends (when the permission is already granted) so the phone's audio-mode switch no longer chops it up.
+- **Assistant banks**: the bank names are given to the assistant at the start, common spoken forms (Alfalah, HBL, UBL, MCB, Meezan, Allied ...) are recognised, and an unclear name is repeated back with the closest banks.
+- **Assistant settings sheet**: Save, Cancel and Reset to default buttons; changes stay in a draft until Save.
+- Tests: `treasury-series.test.ts` gets a `dailySeries` test.
+- Nothing in accounting, ledgers, vouchers or prints changed.
+- `src/lib/version.ts`: 1.6.8.
+
+## v1.6.7 — Voice assistant accuracy, Sileo notifications, Admin fixes
 - **Voice: amounts and totals** (`voice-tools.ts`, `gemini-live.functions.ts`, `AppShell.tsx`): every money value in a tool answer now carries Pakistani-grouped text (`Rs 14,79,640`) and spoken words ("14 lakh 79 hazar 640 rupay"), added in one place for all tools (`withSpoken`). The old western grouping (`1,479,640`) is gone from the spoken summary, the draft card and the save toast. The assistant is told the units (hazar, lakh, crore, arab, dedh, dhai, sawa) and never to convert or add amounts itself. Amounts can be given in parts (`amount_crore`, `amount_lakh`, `amount_thousand`, `amount_rupees`, and `opening_*` for an opening balance) and the app sums them. The draft summary repeats the amount in words.
 - **Voice: totals** : receivables, payables, cheques and cash reports now return a total computed by the app over all accounts (not only the first 15), the overview has a funds total, and grouped report lists skip bounced cheques. Balances carry `balance_side` words for the assistant only; no screen, ledger, voucher or print text changed.
 - **Voice: banks**: the assistant can use the same built-in bank list as the entry form as well as banks already created; a bank never used before is created when the entry is saved, exactly like the form. The entry form's bank dropdown is now a plain list of bank names (no group headings).

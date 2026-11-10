@@ -77,6 +77,7 @@ export function NavAccordion({ groups, onNavigate, wrap }: { groups: readonly Na
                     <Link
                       key={n.to}
                       to={n.to}
+                      replace
                       onClick={onNavigate}
                       activeOptions={{ exact: n.to === "/" }}
                       style={ACCENT[n.to] ? ({ "--nv": ACCENT[n.to] } as React.CSSProperties) : undefined}
