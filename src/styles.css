@@ -1178,3 +1178,77 @@ input.field-error, select.field-error, textarea.field-error { outline: 2px solid
 .auth-toggle-on { background: color-mix(in oklab, currentColor 18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 26%, transparent); }
 @media (prefers-reduced-motion: reduce) { .pin-dot { animation: none; } .pin-box { transition: none; } }
 .dark .side-surface { --orb-top: oklch(0.56 0.23 292); --orb-low: oklch(0.62 0.17 235); }
+
+/* ===== Login surface v2 — deep slate + cool indigo (overrides earlier login rules; old version in .lovable/backup-login-v1) ===== */
+:root {
+  --login-backdrop: oklch(0.16 0.02 258);
+  --login-glass: oklch(0.16 0.02 258);
+  --login-tint: oklch(0.22 0.02 262);
+  --login-panel: oklch(0.235 0.018 258 / 0.72);
+  --login-panel-desktop: oklch(0.22 0.02 258 / 0.78);
+  --login-panel-edge: oklch(1 0 0 / 0.09);
+  --login-foreground: oklch(0.97 0.005 250);
+  --login-accent: oklch(0.64 0.16 262);
+  --login-accent-hover: oklch(0.7 0.16 262);
+  --login-accent-soft: oklch(0.64 0.16 262 / 0.22);
+  --login-accent-ring: oklch(0.64 0.16 262 / 0.38);
+  --login-cta: var(--login-accent);
+  --login-cta-hover: var(--login-accent-hover);
+}
+.login-panel {
+  background: var(--login-panel);
+  border: 1px solid var(--login-panel-edge);
+  box-shadow: 0 24px 60px -20px oklch(0 0 0 / 0.6), inset 0 1px 0 oklch(1 0 0 / 0.06);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  --field: oklch(0.28 0.02 258 / 0.85);
+  --field-border: oklch(1 0 0 / 0.1);
+  --field-ring: oklch(0.64 0.16 262 / 0.45);
+  --muted-foreground: oklch(1 0 0 / 0.62);
+}
+@media (min-width: 768px) { .login-panel { background: var(--login-panel-desktop); } }
+.login-cta {
+  height: 2.875rem;
+  background: linear-gradient(180deg, var(--login-accent), color-mix(in oklab, var(--login-accent) 82%, black));
+  color: oklch(0.99 0 0); font-weight: 600; letter-spacing: 0.005em; border-radius: 0.75rem;
+  border: 1px solid oklch(1 0 0 / 0.08);
+  box-shadow: 0 1px 0 oklch(1 0 0 / 0.16) inset, 0 8px 24px -10px var(--login-accent-soft);
+  transition: transform .12s ease, background-color .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+.login-cta:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--login-accent-hover), var(--login-accent));
+  box-shadow: 0 1px 0 oklch(1 0 0 / 0.2) inset, 0 10px 28px -10px var(--login-accent-ring);
+}
+.login-cta:active:not(:disabled) { transform: translateY(1px); }
+.login-cta:disabled { opacity: .72; cursor: not-allowed; }
+.login-spinner { display: inline-block; width: 0.95rem; height: 0.95rem; border-radius: 9999px; border: 2px solid oklch(1 0 0 / 0.35); border-top-color: oklch(1 0 0 / 0.95); animation: login-spin .7s linear infinite; }
+@keyframes login-spin { to { transform: rotate(360deg); } }
+.login-panel .pin-box {
+  position: relative; display: grid; flex: 1 1 0; max-width: 3.6rem; height: 3.5rem; place-items: center; border-radius: 0.85rem;
+  border: 1px solid oklch(1 0 0 / 0.09); background: oklch(1 0 0 / 0.035); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.03);
+  transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.login-panel .pin-box-active { border-color: var(--login-accent); background: oklch(1 0 0 / 0.05); box-shadow: 0 0 0 3px var(--login-accent-ring), inset 0 1px 0 oklch(1 0 0 / 0.05); transform: none; }
+.login-panel .pin-box-filled { background: oklch(1 0 0 / 0.08); border-color: oklch(1 0 0 / 0.28); }
+.login-panel .pin-dot { width: 0.72rem; height: 0.72rem; border-radius: 9999px; background: var(--login-foreground); box-shadow: 0 0 0 3px oklch(1 0 0 / 0.06); animation: pin-pop .22s cubic-bezier(.2,1.5,.4,1); }
+.login-panel .field-error .pin-box, .login-panel .pin-boxes.field-error .pin-box { border-color: var(--destructive, oklch(0.6 0.2 25)); background: color-mix(in oklab, var(--destructive, oklch(0.6 0.2 25)) 14%, transparent); }
+.login-panel .auth-toggle { background: oklch(1 0 0 / 0.05); border: 1px solid oklch(1 0 0 / 0.07); border-radius: 0.85rem; }
+.login-panel .auth-toggle-indicator { background: oklch(1 0 0 / 0.1); border: 1px solid oklch(1 0 0 / 0.1); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.06); }
+.login-panel .auth-toggle-option { color: oklch(1 0 0 / 0.72); }
+.login-panel .auth-toggle-on { color: var(--login-foreground); background: transparent; box-shadow: none; }
+.login-panel .password-toggle { color: oklch(1 0 0 / 0.62); }
+.login-panel .password-toggle:hover { color: oklch(1 0 0 / 0.92); background: oklch(1 0 0 / 0.06); }
+.login-panel .password-toggle:focus-visible { outline: 2px solid var(--login-accent); outline-offset: 2px; }
+.login-dot-mesh { background-image: radial-gradient(oklch(1 0 0 / 0.06) 1px, transparent 1px); background-size: 22px 22px; mask-image: linear-gradient(135deg, transparent, black 30%, black 70%, transparent); opacity: .55; }
+.login-desktop-vignette, .login-mobile-vignette { background: radial-gradient(120% 80% at 50% 40%, transparent 40%, oklch(0 0 0 / 0.35) 100%); pointer-events: none; }
+.login-arrow-heading { color: var(--login-accent); }
+@media (prefers-reduced-motion: reduce) {
+  .pin-dot { animation: none; } .pin-box { transition: none; }
+  .login-spinner { animation-duration: 1.5s; } .auth-toggle-indicator { transition: none; } .login-cta { transition: none; }
+}
+/* Settings (outside login): sliding pill uses theme-aware colours */
+.auth-toggle { border-radius: 0.85rem; }
+.auth-toggle-indicator { background: color-mix(in oklab, currentColor 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 24%, transparent); }
+.auth-toggle-on { background: transparent; box-shadow: none; }
+.password-toggle { opacity: .7; } .password-toggle:hover { opacity: 1; }
+.login-panel .password-toggle { opacity: 1; }
