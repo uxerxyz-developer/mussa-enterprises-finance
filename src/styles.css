@@ -1246,3 +1246,9 @@ input.field-error, select.field-error, textarea.field-error { outline: 2px solid
   .pin-dot { animation: none; } .pin-box { transition: none; }
   .login-spinner { animation-duration: 1.5s; } .auth-toggle-indicator { transition: none; } .login-cta { transition: none; }
 }
+/* Settings (outside login): sliding pill uses theme-aware colours */
+.auth-toggle { border-radius: 0.85rem; }
+.auth-toggle-indicator { background: color-mix(in oklab, currentColor 16%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 24%, transparent); }
+.auth-toggle-on { background: transparent; box-shadow: none; }
+.password-toggle { opacity: .7; } .password-toggle:hover { opacity: 1; }
+.login-panel .password-toggle { opacity: 1; }
