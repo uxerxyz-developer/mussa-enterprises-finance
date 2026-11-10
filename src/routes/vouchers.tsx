@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Input } from "@/components/ui/input";
+import { usePageSearch } from "@/lib/page-search";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/inputs";
 import { liveEntries, useData, ENTRY_TYPES, type EntryType } from "@/lib/db";
@@ -38,7 +38,7 @@ const BAR: Record<string, string> = { sale: "border-l-sale", purchase: "border-l
 function Vouchers() {
   const d = useData();
   const [f, setF] = useState<"all" | EntryType>("all");
-  const [q, setQ] = useState("");
+  const q = usePageSearch();
   const list = useMemo(() => liveEntries(d).filter((e) => TYPES.includes(e.type)).sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [d]);
   const shown = list.filter((e) => (f === "all" || e.type === f) && (!q || `V-${e.voucherNo} ${e.particulars} ${d.accounts.find((a) => a.id === e.accountId)?.name ?? ""}`.toLowerCase().includes(q.toLowerCase())));
   return (
@@ -51,7 +51,6 @@ function Vouchers() {
           return <Button key={x.key} size="sm" variant="outline" className={cn("shrink-0 rounded-full border-2 font-semibold", on ? tone.on : tone.off)} onClick={() => setF(x.key)}>{x.label}</Button>;
         })}
       </div>
-      <Input className="mb-4" placeholder="Search voucher no., party or details…" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="space-y-2">
         {shown.length === 0 && <p className="py-10 text-center text-muted-foreground">No vouchers</p>}
         {shown.map((e) => {

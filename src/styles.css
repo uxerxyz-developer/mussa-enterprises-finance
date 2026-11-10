@@ -1161,8 +1161,8 @@ input.field-error, select.field-error, textarea.field-error { outline: 2px solid
 .nav-group-head:hover { box-shadow: none; transform: none; }
 
 /* System & Administration: the group with the major items is tinted amber-red (Admin Panel) and blue-grey (Settings & Backup). */
-:root { --nv-admin: oklch(0.74 0.15 48); --nv-system: oklch(0.76 0.07 245); }
-.nav-group-head[data-group="system"] { color: color-mix(in oklab, var(--nv-admin) 55%, var(--sidebar-foreground)); }
+:root { --nv-admin: oklch(0.84 0.17 62); --nv-system: oklch(0.84 0.11 232); }
+.nav-group-head[data-group="system"] { color: color-mix(in oklab, var(--nv-admin) 88%, white); }
 .nav-group-head[data-group="system"] > span::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 2px; border-radius: 9999px; background: var(--nv-admin); box-shadow: 0 0 0 2px color-mix(in oklab, var(--nv-admin) 28%, transparent); }
 
 /* ===== PIN boxes and sign-in choice (v1.6.8) ===== */
@@ -1178,3 +1178,30 @@ input.field-error, select.field-error, textarea.field-error { outline: 2px solid
 .auth-toggle-on { background: color-mix(in oklab, currentColor 18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 26%, transparent); }
 @media (prefers-reduced-motion: reduce) { .pin-dot { animation: none; } .pin-box { transition: none; } }
 .dark .side-surface { --orb-top: oklch(0.56 0.23 292); --orb-low: oklch(0.62 0.17 235); }
+
+/* System & Administration: separated from the other menus by a dashed line above and below. */
+.nav-group[data-group-wrap="system"] { margin-block: 0.6rem; padding-block: 0.35rem; border-block: 1px dashed color-mix(in oklab, var(--nv-admin) 50%, transparent); }
+
+/* ===== Notifications (v1.6.9): Sonner toasts as theme-aware pills, a little like Sileo ===== */
+[data-sonner-toast].app-toast {
+  --tc: oklch(0.7 0.15 290);
+  align-items: center; gap: 0.65rem; min-height: 3.1rem; padding: 0.6rem 1.1rem 0.6rem 0.75rem;
+  border-radius: 9999px !important; color: var(--foreground) !important;
+  background: color-mix(in oklab, var(--card) 90%, var(--tc)) !important;
+  border: 1px solid color-mix(in oklab, var(--tc) 50%, transparent) !important;
+  box-shadow: 0 12px 30px -14px color-mix(in oklab, var(--tc) 60%, black), 0 0 0 1px color-mix(in oklab, var(--tc) 10%, transparent) !important;
+  backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  animation: toast-pop 0.38s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+[data-sonner-toast].app-toast[data-type="success"] { --tc: oklch(0.68 0.18 155); }
+[data-sonner-toast].app-toast[data-type="error"] { --tc: oklch(0.62 0.23 22); }
+[data-sonner-toast].app-toast[data-type="warning"] { --tc: oklch(0.76 0.17 72); }
+[data-sonner-toast].app-toast[data-type="info"] { --tc: oklch(0.66 0.16 250); }
+.dark [data-sonner-toast].app-toast { background: color-mix(in oklab, oklch(0.2 0.02 262) 82%, var(--tc)) !important; border-color: color-mix(in oklab, var(--tc) 60%, transparent) !important; box-shadow: 0 0 0 1px color-mix(in oklab, var(--tc) 14%, transparent), 0 10px 34px -10px var(--tc) !important; }
+[data-sonner-toast].app-toast [data-icon] { display: grid; place-items: center; flex: none; width: 1.9rem; height: 1.9rem; margin: 0; border-radius: 9999px; color: var(--tc); background: color-mix(in oklab, var(--tc) 20%, transparent); }
+[data-sonner-toast].app-toast [data-icon] svg { width: 1.05rem; height: 1.05rem; }
+[data-sonner-toast].app-toast [data-title] { font-size: 0.9rem; font-weight: 600; line-height: 1.25; color: var(--foreground); }
+[data-sonner-toast].app-toast [data-description] { font-size: 0.78rem; color: color-mix(in oklab, var(--foreground) 68%, transparent); }
+[data-sonner-toast].app-toast [data-button] { border-radius: 9999px; background: color-mix(in oklab, var(--tc) 22%, transparent); color: var(--foreground); font-weight: 600; }
+@keyframes toast-pop { from { scale: 0.94; opacity: 0.4; } to { scale: 1; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { [data-sonner-toast].app-toast { animation: none; } }

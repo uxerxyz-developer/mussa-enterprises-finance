@@ -8,6 +8,7 @@ import { PageHeader, PrintHeader } from "@/components/app/inputs";
 import { addNamed, liveEntries, notBounced, removeNamed, renameNamed, useData, type Named } from "@/lib/db";
 import { fmtPKR, titleCase } from "@/lib/format";
 import { FilterBar, emptyFilters, exportEntriesCSV, filterEntries } from "./entries";
+import { usePageSearch } from "@/lib/page-search";
 
 export const Route = createFileRoute("/expenses")({
   head: () => ({
@@ -51,7 +52,8 @@ function NamedList({ title, items }: { title: string; items: Named[] }) {
 function ExpensesPage() {
   const d = useData();
   const [f, setF] = useState(emptyFilters);
-  const list = useMemo(() => filterEntries(d, liveEntries(d).filter((e) => e.type === "expense"), f).sort((a, b) => b.date.localeCompare(a.date)), [d, f]);
+  const pq = usePageSearch();
+  const list = useMemo(() => filterEntries(d, liveEntries(d).filter((e) => e.type === "expense"), { ...f, q: pq }).sort((a, b) => b.date.localeCompare(a.date)), [d, f, pq]);
   const byCat = useMemo(() => {
     const m = new Map<string, number>();
     list.filter(notBounced).forEach((e) => {

@@ -5,8 +5,9 @@ import { accountBalanceTool, draftRows, entryPayload, findAccountTool, formSpecT
 import { Link, Outlet, useLocation, useNavigate, useRouter } from "@tanstack/react-router";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "@/lib/toast";
+import { PAGE_SEARCH, setPageSearch, usePageSearch } from "@/lib/page-search";
 import {
-  LayoutDashboard, ListOrdered, Users, BookOpen, Receipt, Wallet, ShieldCheck, Settings, LogOut, Search, Menu, Lock, Moon, Sun, ShoppingCart, BadgeDollarSign, HandCoins, RefreshCw, CloudUpload, Flame, Zap, Boxes, FileText, Pencil, Check, Mic, Palette,
+  LayoutDashboard, ListOrdered, Users, BookOpen, Receipt, Wallet, ShieldCheck, Settings, LogOut, Search, Menu, Lock, Moon, Sun, ShoppingCart, BadgeDollarSign, HandCoins, RefreshCw, CloudUpload, Flame, Zap, Boxes, FileText, Pencil, Check, Mic, Palette, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -236,9 +237,18 @@ function Shell({ onLogout, dark, onToggleTheme }: { onLogout: (full?: boolean) =
   const { editing } = useDashboard();
   const onDashboard = pathname === "/";
   const canEditLayout = onDashboard || editing;
+  useEffect(() => { setPageSearch(""); }, [pathname]);
+  const pageHint = PAGE_SEARCH[pathname];
+  const pageQ = usePageSearch();
   const searchBox = (
     <div className="flex w-full items-center gap-2 rounded-full border bg-background px-4 py-1">
       <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+      {pageHint ? (
+        <>
+          <Input id="global-search" value={pageQ} onChange={(e) => setPageSearch(e.target.value)} placeholder={pageHint} aria-label={pageHint} className="w-full border-0 bg-transparent shadow-none focus-visible:ring-0" />
+          {pageQ && <button type="button" aria-label="Clear search" onClick={() => setPageSearch("")} className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>}
+        </>
+      ) : (
       <AccountSearch
         id="global-search"
         clearOnSelect
@@ -246,6 +256,7 @@ function Shell({ onLogout, dark, onToggleTheme }: { onLogout: (full?: boolean) =
         placeholder="Search accounts…  (Ctrl+F)"
         onSelect={(a) => navigate({ to: "/ledger/$id", params: { id: a.id } })}
       />
+      )}
     </div>
   );
   const utilityBtn = "nav-item flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-40";

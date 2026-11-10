@@ -55,7 +55,7 @@ export function NavAccordion({ groups, onNavigate, wrap }: { groups: readonly Na
         const isOpen = !!open[g.title];
         const panelId = `nav-group-${gi}`;
         return (
-          <div key={g.title} className="nav-group pb-0.5">
+          <div key={g.title} className="nav-group pb-0.5" data-group-wrap={g.title === "System & Administration" ? "system" : undefined}>
             <button
               type="button"
               data-group={g.title === "System & Administration" ? "system" : undefined}

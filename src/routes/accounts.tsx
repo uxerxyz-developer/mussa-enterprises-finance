@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Search, ChevronRight } from "lucide-react";
+import { usePageSearch } from "@/lib/page-search";
+import { Plus, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AccountForm } from "@/components/app/AccountForm";
 import { PageHeader } from "@/components/app/inputs";
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/accounts")({
 function AccountsPage() {
   const d = useData();
   const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
+  const q = usePageSearch();
   const [type, setType] = useState("");
   const list = useMemo(() => {
     const n = norm(q);
@@ -40,10 +40,6 @@ function AccountsPage() {
   return (
     <div>
       <PageHeader title="Accounts & Ledgers" subtitle={`${list.length} accounts`} actions={<Button onClick={() => setOpen(true)}><Plus /> New Account</Button>} />
-      <div className="relative mb-4 max-w-xl">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input className="h-11 pl-10" aria-label="Search accounts" placeholder="Search by name, ID, or type…" value={q} onChange={(e) => setQ(e.target.value)} />
-      </div>
       <div className="no-print mb-5 flex gap-2 overflow-x-auto pb-1">
         {[["", "All"], ...Object.entries(ACCOUNT_TYPES), ...d.accountTypes.map((item) => [item.id, item.name])].map(([key, label]) =>
           <Button key={key ?? "all"} variant={type === key ? "default" : "outline"} className="shrink-0 rounded-full" onClick={() => setType(key ?? "")}>{label}{key ? "s" : ""}</Button>
