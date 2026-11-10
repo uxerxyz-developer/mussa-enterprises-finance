@@ -9,16 +9,13 @@ export function PinBoxes({ id, length, value, onChange, onComplete, autoFocus, d
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState(false);
-
   useEffect(() => { if (autoFocus) ref.current?.focus(); }, [autoFocus]);
-
   const set = (raw: string) => {
     const v = raw.replace(/\D/g, "").slice(0, length);
     if (v.length > value.length) { try { navigator.vibrate?.(8); } catch { /* unsupported */ } }
     onChange(v);
     if (v.length === length) onComplete?.(v);
   };
-
   return (
     <div id={id} className="pin-boxes relative" onClick={() => ref.current?.focus()}>
       <input
@@ -26,7 +23,7 @@ export function PinBoxes({ id, length, value, onChange, onComplete, autoFocus, d
         aria-label="PIN"
         type="text"
         inputMode="numeric"
-        autoComplete="one-time-code"
+        autoComplete="off"
         autoCorrect="off"
         maxLength={length}
         value={value}
@@ -37,44 +34,23 @@ export function PinBoxes({ id, length, value, onChange, onComplete, autoFocus, d
         className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0"
       />
       <div className="flex justify-between gap-2" aria-hidden="true">
-        {Array.from({ length }, (_, i) => {
-          const isFilled = i < value.length;
-          const isActive = focused && i === Math.min(value.length, length - 1);
-          return (
-            <div key={i} className={cn("pin-box", isFilled && "pin-box-filled", isActive && "pin-box-active")}>
-              {isFilled && <span className="pin-dot" />}
-            </div>
-          );
-        })}
+        {Array.from({ length }, (_, i) => (
+          <div key={i} className={cn("pin-box", i < value.length && "pin-box-filled", focused && i === Math.min(value.length, length - 1) && "pin-box-active")}>
+            {i < value.length && <span className="pin-dot" />}
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
 /** Password field with a show / hide eye. */
-export function PasswordField({ id, value, onChange, autoFocus, placeholder }: {
-  id: string; value: string; onChange: (v: string) => void; autoFocus?: boolean; placeholder?: string;
-}) {
+export function PasswordField({ id, value, onChange, autoFocus, placeholder }: { id: string; value: string; onChange: (v: string) => void; autoFocus?: boolean; placeholder?: string }) {
   const [show, setShow] = useState(false);
   return (
-    <div className="password-field relative">
-      <Input
-        id={id}
-        autoFocus={autoFocus}
-        type={show ? "text" : "password"}
-        autoComplete="current-password"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="pr-11"
-      />
-      <button
-        type="button"
-        aria-label={show ? "Hide password" : "Show password"}
-        aria-pressed={show}
-        onClick={() => setShow((s) => !s)}
-        className="password-toggle absolute right-1.5 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg transition-colors"
-      >
+    <div className="relative">
+      <Input id={id} autoFocus={autoFocus} type={show ? "text" : "password"} autoComplete="current-password" placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} className="pr-10" />
+      <button type="button" aria-label={show ? "Hide password" : "Show password"} onClick={() => setShow((s) => !s)} className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md opacity-70 hover:opacity-100">
         {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>
     </div>
@@ -84,26 +60,9 @@ export function PasswordField({ id, value, onChange, autoFocus, placeholder }: {
 /** Two-way choice shown when a PIN or password is created or reset. */
 export function AuthModeToggle({ value, onChange }: { value: "pin" | "password"; onChange: (m: "pin" | "password") => void }) {
   return (
-    <div role="radiogroup" aria-label="Protect with" className="auth-toggle relative grid grid-cols-2 p-1">
-      <span
-        aria-hidden="true"
-        className={cn(
-          "auth-toggle-indicator pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-[0.6rem] transition-transform duration-200 ease-out",
-          value === "password" && "translate-x-full",
-        )}
-      />
+    <div role="radiogroup" aria-label="Protect with" className="auth-toggle grid grid-cols-2 gap-1 rounded-xl p-1">
       {(["pin", "password"] as const).map((m) => (
-        <button
-          key={m}
-          type="button"
-          role="radio"
-          aria-checked={value === m}
-          onClick={() => onChange(m)}
-          className={cn(
-            "auth-toggle-option relative z-10 rounded-[0.6rem] px-3 py-2 text-sm font-medium transition-colors",
-            value === m ? "auth-toggle-on" : "opacity-70 hover:opacity-100",
-          )}
-        >
+        <button key={m} type="button" role="radio" aria-checked={value === m} onClick={() => onChange(m)} className={cn("rounded-lg px-3 py-2 text-sm font-medium transition", value === m ? "auth-toggle-on" : "opacity-70 hover:opacity-100")}>
           {m === "pin" ? "6-digit PIN" : "Password"}
         </button>
       ))}
