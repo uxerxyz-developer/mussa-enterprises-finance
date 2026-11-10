@@ -33,6 +33,8 @@ export function PageTrailBar({ labels }: { labels: Record<string, string> }) {
   const items = [{ to: "/", label: "Dashboard" }, ...paths.map((p) => ({ to: p, label: labelFor(p) }))];
   const hiddenMid = items.length > 3 ? items.length - 3 : 0;
 
+  if (pathname === "/") return null; // the Dashboard is the start: no path to show
+
   return (
     <nav aria-label="Page path" className="no-print -mt-1 mb-3 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
       {pathname !== "/" && (

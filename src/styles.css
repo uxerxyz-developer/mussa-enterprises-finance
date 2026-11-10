@@ -1141,9 +1141,11 @@ input.field-error, select.field-error, textarea.field-error { outline: 2px solid
 :root { --nv-default: oklch(0.72 0.14 285); }
 .side-surface {
   background-color: var(--sidebar);
+  --orb-top: oklch(0.7 0.17 295);
+  --orb-low: oklch(0.78 0.12 215);
   background-image:
-    radial-gradient(130% 34% at 0% 0%, color-mix(in oklab, oklch(0.7 0.15 290) 18%, transparent), transparent 72%),
-    radial-gradient(130% 30% at 0% 100%, color-mix(in oklab, oklch(0.72 0.12 225) 15%, transparent), transparent 72%),
+    radial-gradient(130% 34% at 0% 0%, color-mix(in oklab, var(--orb-top) 36%, transparent), transparent 72%),
+    radial-gradient(75% 26% at 58% 100%, color-mix(in oklab, var(--orb-low) 34%, transparent), transparent 74%),
     linear-gradient(180deg, var(--sidebar) 0%, color-mix(in oklab, var(--sidebar) 93%, white) 45%, var(--sidebar) 100%);
 }
 .nav-item { --nv: var(--nv-default); }
@@ -1162,3 +1164,17 @@ input.field-error, select.field-error, textarea.field-error { outline: 2px solid
 :root { --nv-admin: oklch(0.74 0.15 48); --nv-system: oklch(0.76 0.07 245); }
 .nav-group-head[data-group="system"] { color: color-mix(in oklab, var(--nv-admin) 55%, var(--sidebar-foreground)); }
 .nav-group-head[data-group="system"] > span::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 2px; border-radius: 9999px; background: var(--nv-admin); box-shadow: 0 0 0 2px color-mix(in oklab, var(--nv-admin) 28%, transparent); }
+
+/* ===== PIN boxes and sign-in choice (v1.6.8) ===== */
+.pin-box { position: relative; display: grid; flex: 1 1 0; max-width: 3.4rem; height: 3.2rem; place-items: center; border-radius: 0.9rem;
+  border: 1px solid color-mix(in oklab, currentColor 26%, transparent); background: color-mix(in oklab, currentColor 6%, transparent);
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+.pin-box-active { border-color: var(--login-cta, oklch(0.72 0.14 285)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--login-cta, oklch(0.72 0.14 285)) 28%, transparent); transform: translateY(-1px); }
+.pin-box-filled { background: color-mix(in oklab, currentColor 12%, transparent); border-color: color-mix(in oklab, currentColor 42%, transparent); }
+.pin-dot { width: 0.7rem; height: 0.7rem; border-radius: 9999px; background: currentColor; animation: pin-pop .22s cubic-bezier(.2,1.5,.4,1); }
+@keyframes pin-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.field-error .pin-box, .pin-boxes.field-error .pin-box { border-color: var(--destructive); background: color-mix(in oklab, var(--destructive) 12%, transparent); }
+.auth-toggle { background: color-mix(in oklab, currentColor 8%, transparent); }
+.auth-toggle-on { background: color-mix(in oklab, currentColor 18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 26%, transparent); }
+@media (prefers-reduced-motion: reduce) { .pin-dot { animation: none; } .pin-box { transition: none; } }
+.dark .side-surface { --orb-top: oklch(0.56 0.23 292); --orb-low: oklch(0.62 0.17 235); }

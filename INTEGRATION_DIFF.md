@@ -1,7 +1,13 @@
-# INTEGRATION_DIFF.md — v1.6.7
+# INTEGRATION_DIFF.md — v1.6.8
 
 Reference only: every change below is already applied inside this project; nothing has to be merged by hand. See CHANGELOG.md for the version history.
 Compared with v1.0.0 (your original upload): 12 files changed, 10 new files. `src/lib/db.ts`, accounting math, voice files, transaction labels, Cheque Status, "This month" and `PrintHeader` are untouched.
+
+## S. Sign-in, back button, greeting, bank line (v1.6.8)
+- New `AuthInput.tsx`; `AppShell.tsx` (Login rewrite, Dashboard back guard, bank names to the assistant), `settings.tsx` (change PIN/password), `db.ts` (`pinLength`, `setupAuth`/`changePassword` mode, `rememberPinLength`, recovery update keeps mode), `styles.css` (PIN boxes, sign-in toggle, sidebar orbs).
+- `PageTrailBar.tsx` (hidden on `/`), `SidebarNav.tsx` and the bottom bar links (`replace`).
+- `useGeminiLive.ts` (`playGreetingOnce`, deferred microphone), `voice-tools.ts` (`BANK_ALIASES`), `voice-settings.ts` (banks in the instruction), `VoiceSettings.tsx` (Save / Cancel / Reset).
+- `treasury-series.ts` (`dailySeries`), `TreasuryCard.tsx`, `TreasuryViz.tsx`; test `treasury-series.test.ts`.
 
 ## R. Voice accuracy, Sileo, Admin (v1.6.7)
 - `voice-tools.ts` (money/words/parts helpers, `withSpoken`, `bankChoices`, guided account draft, report totals), `fuzzy.ts` (Urdu-script query), `gemini-live.functions.ts` (instruction + schema), `voice-settings.ts` (greeting field, names in instruction), `useGeminiLive.ts` (temperature), `AppShell.tsx` (dispatcher wrapper, bank creation on save, draft card, keyboard flag, imports).

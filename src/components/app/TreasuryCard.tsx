@@ -6,7 +6,7 @@ import { accountBalance, entryState, fundList, fundName, liveAccounts, liveEntri
 import { fmtDate, fmtPKR, todayISO } from "@/lib/format";
 import { haptic } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
-import { activitySeries, shares } from "@/lib/treasury-series";
+import { dailySeries, shares } from "@/lib/treasury-series";
 import { Bars, Ring, StatusDots, Trend } from "@/components/app/TreasuryViz";
 
 type Panel = "cash" | "bank" | "receivable" | "payable" | "cheques";
@@ -39,7 +39,7 @@ export function TreasuryCard({ editing, w }: { editing: boolean; w: number }) {
       recTotal: receivables.reduce((x, p) => x + p.b, 0), payTotal: payables.reduce((x, p) => x + p.b, 0),
       pending: by("pending"), cleared: by("cleared"), bounced: by("bounced"),
       // visuals only
-      activity: activitySeries(funds.slice(1), today, 12),
+      activity: dailySeries(funds.slice(1), today, 30, 10),
       cashShare: shares([all[0]!.bal, all.slice(1).reduce((x, f) => x + f.bal, 0)]),
       recBars: receivables.slice(0, 6).map((p) => p.b),
       payParts: shares([...payables.slice(0, 3).map((p) => p.b), payables.slice(3).reduce((x, p) => x + p.b, 0)]),

@@ -27,10 +27,10 @@ export function Ring({ parts, colors, masked, className, stroke = 14, label, chi
 }
 
 /** Soften a short series so the line becomes a gentle wave, not a zig-zag: two light moving averages, then at most 8 points. */
-function softSeries(v: number[], n = 8): number[] {
+function softSeries(v: number[], n = 10): number[] {
   if (v.length < 3) return v;
   const ma = (a: number[]) => a.map((_, i) => (a[Math.max(0, i - 1)]! + a[i]! + a[Math.min(a.length - 1, i + 1)]!) / 3);
-  const s = ma(ma(v));
+  const s = ma(v);
   const m = Math.min(n, s.length);
   return Array.from({ length: m }, (_, i) => {
     const t = (i * (s.length - 1)) / (m - 1);

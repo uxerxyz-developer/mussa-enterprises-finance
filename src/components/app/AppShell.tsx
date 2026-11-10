@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { GeminiLiveWorkspaceBar } from "./voice/GeminiLiveWorkspaceBar";
 import { useGeminiLive, type PendingDraft } from "@/hooks/useGeminiLive";
-import { accountBalanceTool, draftRows, entryPayload, findAccountTool, formSpecTool, lastTransactionTool, listTool, overviewTool, money, reportTool, searchEntriesTool, validateAccountDraft, validateEntryDraft, withSpoken, type AccountDraft, type EntryDraft } from "@/lib/voice-tools";
+import { accountBalanceTool, draftRows, entryPayload, findAccountTool, formSpecTool, lastTransactionTool, listTool, overviewTool, bankChoices, money, reportTool, searchEntriesTool, validateAccountDraft, validateEntryDraft, withSpoken, type AccountDraft, type EntryDraft } from "@/lib/voice-tools";
 import { Link, Outlet, useLocation, useNavigate, useRouter } from "@tanstack/react-router";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "@/lib/toast";
@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { AccountSearch, Field, TitleInput } from "./inputs";
-import { accountBalance, addAccount, addBank, addEntry, initials, type EntryType, changePassword, checkPw, ENTRY_TYPES, findDuplicate, getData, liveAccounts, liveBanks, loadData, searchAccounts, matchesRecovery, redo, setupAuth, takeSnapshot, undo, useData, useLoaded } from "@/lib/db";
+import { AuthModeToggle, PasswordField, PinBoxes } from "./AuthInput";
+import { accountBalance, addAccount, addBank, addEntry, initials, type EntryType, changePassword, checkPw, ENTRY_TYPES, findDuplicate, getData, liveAccounts, liveBanks, loadData, searchAccounts, matchesRecovery, redo, rememberPinLength, setupAuth, takeSnapshot, undo, useData, useLoaded } from "@/lib/db";
 import { norm, todayISO } from "@/lib/format";
 import { Logo } from "@/components/app/Logo";
 import { mussaMark, whiteLogo } from "@/lib/logo-images";
@@ -209,6 +210,29 @@ function Shell({ onLogout, dark, onToggleTheme }: { onLogout: (full?: boolean) =
     update();
     return () => { document.removeEventListener("focusin", later); document.removeEventListener("focusout", later); vv?.removeEventListener("resize", update); delete root.dataset["kbd"]; };
   }, [pathname]);
+
+  // The Dashboard is the end of the line: on it, Back asks once ("press again to exit") and a second Back within 2 seconds leaves the app.
+  // A marker entry sits above the Dashboard in the history so the first Back stays inside the app.
+  useEffect(() => {
+    if (pathname !== "/") return;
+    const marked = () => ((window.history.state ?? {}) as Record<string, unknown>)["__guard"] === true;
+    const mark = () => {
+      const s = (window.history.state ?? {}) as Record<string, unknown>;
+      const idx = typeof s["__TSR_index"] === "number" ? s["__TSR_index"] + 1 : undefined;
+      window.history.pushState({ ...s, ...(idx !== undefined ? { __TSR_index: idx } : {}), __guard: true }, "", window.location.href);
+    };
+    if (!marked()) mark();
+    let armedUntil = 0;
+    const onPop = () => {
+      if (window.location.pathname !== "/" || marked()) return;
+      if (Date.now() < armedUntil) { window.removeEventListener("popstate", onPop); window.history.back(); return; }
+      armedUntil = Date.now() + 2000;
+      toast("Press back again to exit");
+      mark();
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [pathname]);
   const { editing } = useDashboard();
   const onDashboard = pathname === "/";
   const canEditLayout = onDashboard || editing;
@@ -317,7 +341,7 @@ function Shell({ onLogout, dark, onToggleTheme }: { onLogout: (full?: boolean) =
             <div className="relative flex items-stretch">
               <span aria-hidden="true" className="mobile-lens" data-on={active >= 0} />
               {tabs.map((n, i) => (
-                <Link key={n.to} to={n.to} onClick={() => haptic(8)} aria-current={i === active ? "page" : undefined} className={cn("mobile-tab", i === active && "is-active")}>
+                <Link key={n.to} to={n.to} replace onClick={() => haptic(8)} aria-current={i === active ? "page" : undefined} className={cn("mobile-tab", i === active && "is-active")}>
                   <n.icon className="mobile-tab-ic h-[22px] w-[22px]" strokeWidth={2.1} />
                   <span>{n.label}</span>
                 </Link>
@@ -441,31 +465,45 @@ function Login({ firstRun: needsSetup, onDone, requireUsername }: { firstRun: bo
   const [recovery, setRecovery] = useState("");
   const needUser = firstRun || forgot || requireUsername;
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if ((needUser && !username.trim()) || !pw) { toast.error(needUser ? "Username and PIN are required" : "PIN is required"); return; }
+  const auth = getData().auth;
+  const savedMode: "pin" | "password" = auth?.mode === "password" ? "password" : "pin";
+  const savedLen = auth?.pinLength;
+  const [mode, setMode] = useState<"pin" | "password">(savedMode);
+  const activeMode = firstRun || forgot ? mode : savedMode;
+  const legacyPin = !firstRun && !forgot && savedMode === "pin" && !savedLen; // an older PIN: length unknown, single field until it is recorded
+  const pinLen = firstRun || forgot ? 6 : savedLen ?? 6;
+  const cred = activeMode === "pin" ? "PIN" : "password";
+  const strong = (v: string) => (activeMode === "pin" ? /^\d{6}$/.test(v) : v.length >= 6);
+  const rule = activeMode === "pin" ? "PIN must be exactly 6 digits" : "Password must be at least 6 characters";
+
+  const run = async (override?: string) => {
+    const p = override ?? pw;
+    if ((needUser && !username.trim()) || !p) { toast.error(needUser ? `Username and ${cred} are required` : `${cred === "PIN" ? "PIN" : "Password"} is required`); return; }
     setBusy(true);
     if (forgot) {
       const d = getData();
       const ok = d.auth && norm(username) === norm(d.auth.username) && matchesRecovery(recovery);
       if (!ok) { setBusy(false); toast.error("Username and registered email or phone do not match"); return; }
-      if (!/^\d{4,8}$/.test(pw) || pw !== pw2) { setBusy(false); toast.error("PINs must match and contain 4 to 8 digits"); return; }
-      await changePassword(pw);
-      toast.success("Password reset. You are signed in.");
+      if (!strong(p) || p !== pw2) { setBusy(false); toast.error(!strong(p) ? rule : "The two entries do not match"); return; }
+      await changePassword(p, mode);
+      toast.success(`${cred === "PIN" ? "PIN" : "Password"} reset. You are signed in.`);
       setBusy(false);
       onDone();
       return;
     }
     if (firstRun) {
-      if (!/^\d{4,8}$/.test(pw)) { setBusy(false); toast.error("PIN must contain 4 to 8 digits"); return; }
-      if (pw !== pw2) { setBusy(false); toast.error("PINs do not match"); return; }
+      if (!strong(p)) { setBusy(false); toast.error(rule); return; }
+      if (p !== pw2) { setBusy(false); toast.error("The two entries do not match"); return; }
       if (!recovery.trim()) { setBusy(false); toast.error("Recovery email or phone is required"); return; }
-      await setupAuth(username.trim(), pw, company.trim(), recovery.includes("@") ? recovery : "", recovery.includes("@") ? "" : recovery);
+      await setupAuth(username.trim(), p, company.trim(), recovery.includes("@") ? recovery : "", recovery.includes("@") ? "" : recovery, mode);
       onDone();
-    } else if (await checkPw(pw, needUser ? username : undefined)) onDone();
-    else { fieldError("login-pin", needUser ? "Wrong username or PIN" : "Wrong PIN"); setPw(""); }
+    } else if (await checkPw(p, needUser ? username : undefined)) {
+      if (legacyPin && /^\d+$/.test(p)) rememberPinLength(p.length);
+      onDone();
+    } else { fieldError("login-pin", needUser ? `Wrong username or ${cred}` : `Wrong ${cred}`); setPw(""); }
     setBusy(false);
   };
+  const submit = (e: React.FormEvent) => { e.preventDefault(); void run(); };
 
   return (
     <div className="login-screen relative grid min-h-screen bg-login-backdrop md:grid-cols-[58%_42%]">
@@ -507,7 +545,7 @@ function Login({ firstRun: needsSetup, onDone, requireUsername }: { firstRun: bo
           <img src={whiteLogo} alt="Mussa Enterprises" className="mx-auto mb-2 h-auto w-64 max-w-full object-contain" />
           <div className="border-t border-login-foreground/10 pt-4">
             <h1 className="text-xl font-semibold">{firstRun ? "Set Up Your Cash Control" : forgot ? "Reset password" : "Sign in"}</h1>
-            <p className="mt-1 text-sm text-login-foreground/60">{firstRun ? "Configure master PIN and business access to secure your ledger." : forgot ? "Confirm your username and registered email or phone." : needUser ? "Enter your username and PIN." : "Enter your PIN to unlock."}</p>
+            <p className="mt-1 text-sm text-login-foreground/60">{firstRun ? "Choose a 6-digit PIN or a password to secure your ledger." : forgot ? "Confirm your username and registered email or phone." : needUser ? `Enter your username and ${cred}.` : `Enter your ${cred} to unlock.`}</p>
           </div>
           {(firstRun || forgot) && (
             <Field label="Company / Business Name">
@@ -520,12 +558,19 @@ function Login({ firstRun: needsSetup, onDone, requireUsername }: { firstRun: bo
             </Field>
           )}
           {(firstRun || forgot) && <Field label="Recovery Email or Phone"><Input value={recovery} onChange={(e) => setRecovery(e.target.value)} /></Field>}
-          <Field label={forgot ? "New PIN" : "PIN"}>
-            <Input id="login-pin" autoFocus={!needUser} type="password" inputMode="numeric" value={pw} onChange={(e) => setPw(e.target.value.replace(/\D/g, "").slice(0, 8))} />
+          {(firstRun || forgot) && <AuthModeToggle value={mode} onChange={(m) => { setMode(m); setPw(""); setPw2(""); }} />}
+          <Field label={forgot ? (activeMode === "pin" ? "New PIN" : "New password") : activeMode === "pin" ? "PIN" : "Password"}>
+            {activeMode === "pin" && !legacyPin ? (
+              <PinBoxes id="login-pin" length={pinLen} value={pw} onChange={setPw} autoFocus={!needUser} disabled={busy} onComplete={(v) => { if (!firstRun && !forgot && (!needUser || username.trim())) void run(v); }} />
+            ) : activeMode === "pin" ? (
+              <Input id="login-pin" autoFocus={!needUser} type="password" inputMode="numeric" value={pw} onChange={(e) => setPw(e.target.value.replace(/\D/g, "").slice(0, 8))} />
+            ) : (
+              <PasswordField id="login-pin" autoFocus={!needUser} value={pw} onChange={setPw} />
+            )}
           </Field>
           {(firstRun || forgot) && (
-            <Field label="Confirm PIN">
-              <Input type="password" inputMode="numeric" value={pw2} onChange={(e) => setPw2(e.target.value.replace(/\D/g, "").slice(0, 8))} />
+            <Field label={activeMode === "pin" ? "Confirm PIN" : "Confirm password"}>
+              {activeMode === "pin" ? <PinBoxes id="login-pin-2" length={6} value={pw2} onChange={setPw2} disabled={busy} /> : <PasswordField id="login-pin-2" value={pw2} onChange={setPw2} />}
             </Field>
           )}
           <Button type="submit" className="login-cta w-full" disabled={busy}>{firstRun ? "Create & Continue" : forgot ? "Reset & Sign in" : "Sign in"}</Button>
@@ -571,7 +616,7 @@ function MicButton() {
       const v = getVoiceSettings().settings;
       const ctx = resumeContextRef.current;
       resumeContextRef.current = null;
-      return { voice: v.voice, extraInstruction: voiceInstruction(v, todayISO(), liveAccounts(getData()).filter((x) => !x.equity).map((x) => x.name)), greeting: ctx ? null : voiceGreeting(v), greetingKey: `${v.voice}|${v.language}|${v.greeting.trim()}`, initialContext: ctx };
+      return { voice: v.voice, extraInstruction: voiceInstruction(v, todayISO(), liveAccounts(getData()).filter((x) => !x.equity).map((x) => x.name), bankChoices(getData()).map((b) => b.name)), greeting: ctx ? null : voiceGreeting(v), greetingKey: `${v.voice}|${v.language}|${v.greeting.trim()}`, initialContext: ctx };
     },
     onToolCall: (name, args) => toolRef.current(name, args),
   });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { activitySeries, balanceSeries, lastDays, shares, smoothPath } from "@/lib/treasury-series";
+import { activitySeries, balanceSeries, dailySeries, lastDays, shares, smoothPath } from "@/lib/treasury-series";
 
 describe("treasury visuals helpers", () => {
   it("lastDays returns n consecutive days ending today, oldest first", () => {
@@ -32,6 +32,16 @@ describe("treasury visuals helpers", () => {
     expect(activitySeries([f], "2026-11-06")).toEqual([100, 150, 90]);
     expect(activitySeries([f], "2026-11-06", 2)).toEqual([150, 90]);
     expect(activitySeries([{ opening: 5, rows: [] }], "2026-11-06")).toEqual([5]);
+  });
+  it("dailySeries carries the balance across quiet days and ends on today", () => {
+    const f = { opening: 100, rows: [
+      { e: { date: "2026-11-01" }, bal: 100 },
+      { e: { date: "2026-11-02" }, bal: 150 },
+      { e: { date: "2026-11-03" }, bal: 150 },
+      { e: { date: "2026-11-04" }, bal: 90 },
+      { e: { date: "2026-12-01" }, bal: 500 },
+    ] };
+    expect(dailySeries([f], "2026-11-06", 30, 10)).toEqual([100, 100, 100, 100, 100, 100, 100, 100, 150, 90]);
   });
   it("smoothPath: too few points gives nothing, flat points right, rising points up", () => {
     expect(smoothPath([1], 38, 22)).toEqual({ d: "", end: null });

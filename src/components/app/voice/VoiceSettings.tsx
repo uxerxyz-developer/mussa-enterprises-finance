@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { playVoiceSample } from "@/lib/voice-preview";
 import { cn } from "@/lib/utils";
+import { toast } from "@/lib/toast";
 import {
-  saveVoiceSettings, useVoiceSettings, VOICE_OPTIONS,
+  saveVoiceSettings, useVoiceSettings, VOICE_DEFAULTS, VOICE_OPTIONS,
   type VoiceLang, type VoiceLength, type VoiceSettings,
 } from "@/lib/voice-settings";
 
@@ -77,17 +78,28 @@ export function VoiceSetupCard({ onStart }: { onStart: (s: VoiceSettings) => voi
   );
 }
 
-/** Sidebar entry: change the same choices later. */
+/** Sidebar entry: change the same choices later. Changes stay in a draft until Save; Cancel drops them; Reset puts the defaults in the draft. */
 export function VoiceSettingsSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { settings } = useVoiceSettings();
+  const [draft, setDraft] = useState<VoiceSettings>(settings);
+  useEffect(() => { if (open) setDraft(settings); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const dirty = JSON.stringify(draft) !== JSON.stringify(settings);
+  const isDefault = JSON.stringify(draft) === JSON.stringify(VOICE_DEFAULTS);
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[22rem] max-w-[92vw] overflow-y-auto sm:max-w-sm">
-        <SheetHeader>
+      <SheetContent side="right" className="flex w-[22rem] max-w-[92vw] flex-col overflow-hidden p-0 sm:max-w-sm">
+        <SheetHeader className="px-6 pt-6">
           <SheetTitle>Voice Settings</SheetTitle>
-          <SheetDescription>Applies the next time the assistant starts.</SheetDescription>
+          <SheetDescription>Applies the next time the assistant starts.{dirty && <span className="ml-1 font-medium text-amber-500">Unsaved changes.</span>}</SheetDescription>
         </SheetHeader>
-        <div className="mt-5"><VoiceSettingsFields value={settings} onChange={saveVoiceSettings} /></div>
+        <div className="mt-4 flex-1 overflow-y-auto px-6 pb-4"><VoiceSettingsFields value={draft} onChange={setDraft} /></div>
+        <div className="flex items-center gap-2 border-t bg-background px-6 py-3">
+          <Button type="button" variant="ghost" size="sm" disabled={isDefault} onClick={() => setDraft(VOICE_DEFAULTS)}>Reset to default</Button>
+          <div className="ml-auto flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => { setDraft(settings); onOpenChange(false); }}>Cancel</Button>
+            <Button type="button" size="sm" disabled={!dirty} onClick={() => { saveVoiceSettings(draft); toast.success("Voice settings saved"); onOpenChange(false); }}>Save</Button>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );

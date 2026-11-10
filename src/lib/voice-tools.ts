@@ -64,6 +64,20 @@ export function withSpoken<T>(value: T): T {
   return value;
 }
 type BankChoice = { id: string; name: string };
+/** Common ways a bank is said aloud (checked in this order) -> the name used in the list. */
+const BANK_ALIASES: Array<[string, string]> = [
+  ["mcbislamic", "MCB Islamic Bank"], ["habibmetro", "Habib Metropolitan Bank"], ["metropolitan", "Habib Metropolitan Bank"], ["alhabib", "Bank Al Habib"],
+  ["hbl", "Habib Bank Limited (HBL)"], ["habibbank", "Habib Bank Limited (HBL)"], ["alfalah", "Bank Alfalah"], ["falah", "Bank Alfalah"], ["alfala", "Bank Alfalah"],
+  ["ubl", "United Bank Limited (UBL)"], ["unitedbank", "United Bank Limited (UBL)"], ["mcb", "MCB Bank"], ["meezan", "Meezan Bank"], ["mezan", "Meezan Bank"],
+  ["allied", "Allied Bank Limited (ABL)"], ["abl", "Allied Bank Limited (ABL)"], ["nbp", "National Bank of Pakistan (NBP)"], ["nationalbank", "National Bank of Pakistan (NBP)"],
+  ["faysal", "Faysal Bank"], ["askari", "Askari Bank"], ["soneri", "Soneri Bank"], ["jsbank", "JS Bank"], ["bop", "Bank of Punjab (BOP)"], ["punjab", "Bank of Punjab (BOP)"],
+  ["khyber", "Bank of Khyber"], ["islami", "Bank Islami"], ["sindh", "Sindh Bank"], ["silk", "Silk Bank"], ["samba", "Samba Bank"], ["dubai", "Dubai Islamic Bank"],
+  ["standardchartered", "Standard Chartered Bank"], ["baraka", "Al Baraka Bank"],
+];
+const bankAlias = (said: string): string => {
+  const k = said.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  return BANK_ALIASES.find(([a]) => k.includes(a))?.[1] ?? said;
+};
 /** Banks the user already has plus the built-in list of banks (the same names the entry form offers). */
 export function bankChoices(d: Data): BankChoice[] {
   const have = liveBanks(d).map((b) => ({ id: b.id, name: b.name }));
@@ -200,7 +214,7 @@ export function validateEntryDraft(d: Data, a: Args, today: string): ToolResult 
       const banks = bankChoices(d);
       const bn = str(a["bank_name"]);
       if (!bn) missing.push(`bank_name: the bank the user names (any bank from list_banks, for example ${banks.slice(0, 4).map((b) => b.name).join(", ")})`);
-      else { const r = matchNames(bn, banks, (b) => b.name); if (r.best) bank = r.best; else return { ok: false, status: r.status === "ambiguous" ? "bank_ambiguous" : "bank_not_found", candidates: r.candidates.map((c) => c.item.name), banks: banks.slice(0, 12).map((b) => b.name), instruction: "Read the candidate banks to the user and ask which one. Never invent a bank name." }; }
+      else { const r = matchNames(bankAlias(bn), banks, (b) => b.name); if (r.best) bank = r.best; else return { ok: false, status: r.status === "ambiguous" ? "bank_ambiguous" : "bank_not_found", candidates: r.candidates.map((c) => c.item.name), banks: banks.slice(0, 12).map((b) => b.name), instruction: "Read the candidate banks to the user and ask which one. Never invent a bank name." }; }
       if (method === "cheque") { const cn = str(a["cheque_no"]); if (!cn) missing.push('cheque_no: ask for the cheque number (pass "none" if the user does not have it)'); else if (!NONE(cn)) chequeNo = cn; }
       if (method === "online") { const rf = str(a["reference"]); if (!rf) missing.push('reference: ask for the transaction reference (pass "none" to skip)'); else if (!NONE(rf)) reference = rf; }
     }

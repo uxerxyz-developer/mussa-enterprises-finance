@@ -5,6 +5,7 @@ import { Download, RotateCcw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { AuthModeToggle, PasswordField, PinBoxes } from "@/components/app/AuthInput";
 import { playSound, setSoundsEnabled, soundsEnabled } from "@/lib/sounds";
 import { Field, PageHeader, TitleInput } from "@/components/app/inputs";
 import { CloudBackup } from "@/components/app/CloudBackup";
@@ -31,6 +32,7 @@ function SettingsPage() {
   const [c, setC] = useState(d.company);
   const [oldPw, setOldPw] = useState("");
   const [pw, setPw] = useState("");
+  const [newMode, setNewMode] = useState<"pin" | "password">(d.auth?.mode === "password" ? "password" : "pin");
   const [recoveryEmail, setRecoveryEmail] = useState(d.auth?.recoveryEmail ?? "");
   const [recoveryPhone, setRecoveryPhone] = useState(d.auth?.recoveryPhone ?? "");
   const [snaps, setSnaps] = useState<Snapshot[]>([]);
@@ -70,14 +72,19 @@ function SettingsPage() {
 
         <form className="space-y-4 rounded-lg border bg-card p-5" onSubmit={async (e) => {
           e.preventDefault();
-          if (!(await checkPw(oldPw))) { toast.error("Current password is wrong"); return; }
-          if (pw.length < 4) { toast.error("New password must be at least 4 characters"); return; }
-          await changePassword(pw); setOldPw(""); setPw(""); toast.success("Password changed");
+          if (!(await checkPw(oldPw))) { toast.error("Current PIN or password is wrong"); return; }
+          if (newMode === "pin" ? !/^\d{6}$/.test(pw) : pw.length < 6) { toast.error(newMode === "pin" ? "PIN must be exactly 6 digits" : "Password must be at least 6 characters"); return; }
+          await changePassword(pw, newMode); setOldPw(""); setPw(""); toast.success(newMode === "pin" ? "PIN changed" : "Password changed");
         }}>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Change Password</h2>
-          <Field label="Current Password"><Input type="password" value={oldPw} onChange={(e) => setOldPw(e.target.value)} /></Field>
-          <Field label="New Password"><Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} /></Field>
-          <div className="flex justify-end"><Button type="submit">Update Password</Button></div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Change PIN or Password</h2>
+          <Field label="Current PIN or password">
+            {d.auth?.mode !== "password" && d.auth?.pinLength ? <PinBoxes id="old-pin" length={d.auth.pinLength} value={oldPw} onChange={setOldPw} /> : <PasswordField id="old-pin" value={oldPw} onChange={setOldPw} />}
+          </Field>
+          <AuthModeToggle value={newMode} onChange={(m) => { setNewMode(m); setPw(""); }} />
+          <Field label={newMode === "pin" ? "New 6-digit PIN" : "New password"}>
+            {newMode === "pin" ? <PinBoxes id="new-pin" length={6} value={pw} onChange={setPw} /> : <PasswordField id="new-pin" value={pw} onChange={setPw} />}
+          </Field>
+          <div className="flex justify-end"><Button type="submit">Update</Button></div>
         </form>
 
         <div className="space-y-4 rounded-lg border bg-card p-5">

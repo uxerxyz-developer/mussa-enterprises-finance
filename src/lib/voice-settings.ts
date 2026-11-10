@@ -42,7 +42,7 @@ export function sanitizeVoice(raw: unknown): VoiceSettings {
 }
 
 /** Extra system-prompt lines derived from the settings (appended to the server's base instruction). */
-export function voiceInstruction(s: VoiceSettings, today?: string, names: string[] = []): string {
+export function voiceInstruction(s: VoiceSettings, today?: string, names: string[] = [], banks: string[] = []): string {
   const lang =
     s.language === "urdu" ? "Always speak Urdu with natural Pakistani pronunciation and accent."
     : s.language === "english" ? "Always speak English, clearly and slowly enough for a Pakistani business user."
@@ -51,7 +51,8 @@ export function voiceInstruction(s: VoiceSettings, today?: string, names: string
   const rules = "If a user message is exactly ENTRY_SAVED, answer with a very short confirmation (for example: Entry save ho gayi) and forget the previous entry's party and amount. Messages starting with CONTEXT: are background information about the screen; acknowledge in one short sentence and never save anything yourself.";
   const date = today ? ` Today is ${today} (Pakistan time); use it for words like aaj, kal and parson.` : "";
   const list = names.length ? ` Known account names (use these exact spellings; if you hear something close, say the name you understood and ask to confirm): ${names.slice(0, 120).join("; ")}.` : "";
-  return `${lang} ${len} ${rules}${date} Keep the same voice, gender and tone for the whole conversation.${list}`;
+  const bankList = banks.length ? ` Banks the user may mention (hear them as one of these; if unsure, say the bank you understood and ask): ${banks.slice(0, 40).join("; ")}.` : "";
+  return `${lang} ${len} ${rules}${date} Keep the same voice, gender and tone for the whole conversation.${list}${bankList}`;
 }
 
 /** First thing the assistant says when a session opens (the model is silent until it gets a first turn). */
