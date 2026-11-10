@@ -1,7 +1,12 @@
-# INTEGRATION_DIFF.md — v1.6.8
+# INTEGRATION_DIFF.md — v1.6.9
 
 Reference only: every change below is already applied inside this project; nothing has to be merged by hand. See CHANGELOG.md for the version history.
 Compared with v1.0.0 (your original upload): 12 files changed, 10 new files. `src/lib/db.ts`, accounting math, voice files, transaction labels, Cheque Status, "This month" and `PrintHeader` are untouched.
+
+## T. Search, notifications, sidebar lines (v1.6.9)
+- New `lib/page-search.ts`; `AppShell.tsx` (top-bar search switches per page, clears on page change); `accounts.tsx`, `vouchers.tsx`, `entries.tsx` (text box removed from `FilterBar`), `expenses.tsx` read the shared text.
+- `lib/toast.ts` and `components/ui/toaster.tsx` use Sonner again; `.app-toast` block at the end of `styles.css`; `package.json` without `sileo`.
+- `SidebarNav.tsx` (`data-group-wrap`) and `styles.css` (dashed lines, brighter colours).
 
 ## S. Sign-in, back button, greeting, bank line (v1.6.8)
 - New `AuthInput.tsx`; `AppShell.tsx` (Login rewrite, Dashboard back guard, bank names to the assistant), `settings.tsx` (change PIN/password), `db.ts` (`pinLength`, `setupAuth`/`changePassword` mode, `rememberPinLength`, recovery update keeps mode), `styles.css` (PIN boxes, sign-in toggle, sidebar orbs).

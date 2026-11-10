@@ -1,3 +1,4 @@
+import { usePageSearch } from "@/lib/page-search";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Download, Printer } from "lucide-react";
@@ -48,9 +49,6 @@ export function FilterBar({ f, setF }: { f: EntryFilters; setF: (f: EntryFilters
   const set = (k: keyof EntryFilters) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   return (
     <div className="no-print mb-4 grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-3 lg:grid-cols-6">
-      <Field label="Search" className="sm:col-span-3 lg:col-span-2">
-        <Input value={f.q} onChange={set("q")} placeholder="Name, ID, voucher, cheque, particulars…" />
-      </Field>
       <Field label="Type">
         <NativeSelect value={f.type} onChange={set("type")}>
           <option value="">All</option>
@@ -89,7 +87,8 @@ export function exportEntriesCSV(d: Data, list: Entry[], name: string) {
 function EntriesPage() {
   const d = useData();
   const [f, setF] = useState(emptyFilters);
-  const list = useMemo(() => filterEntries(d, liveEntries(d), f).sort((a, b) => b.date.localeCompare(a.date) || b.voucherNo - a.voucherNo), [d, f]);
+  const pq = usePageSearch();
+  const list = useMemo(() => filterEntries(d, liveEntries(d), { ...f, q: pq }).sort((a, b) => b.date.localeCompare(a.date) || b.voucherNo - a.voucherNo), [d, f, pq]);
   return (
     <div>
       <PageHeader
