@@ -1223,22 +1223,22 @@ input.field-error, select.field-error, textarea.field-error { outline: 2px solid
 .login-cta:disabled { opacity: .72; cursor: not-allowed; }
 .login-spinner { display: inline-block; width: 0.95rem; height: 0.95rem; border-radius: 9999px; border: 2px solid oklch(1 0 0 / 0.35); border-top-color: oklch(1 0 0 / 0.95); animation: login-spin .7s linear infinite; }
 @keyframes login-spin { to { transform: rotate(360deg); } }
-.pin-box {
+.login-panel .pin-box {
   position: relative; display: grid; flex: 1 1 0; max-width: 3.6rem; height: 3.5rem; place-items: center; border-radius: 0.85rem;
   border: 1px solid oklch(1 0 0 / 0.09); background: oklch(1 0 0 / 0.035); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.03);
   transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
-.pin-box-active { border-color: var(--login-accent); background: oklch(1 0 0 / 0.05); box-shadow: 0 0 0 3px var(--login-accent-ring), inset 0 1px 0 oklch(1 0 0 / 0.05); transform: none; }
-.pin-box-filled { background: oklch(1 0 0 / 0.08); border-color: oklch(1 0 0 / 0.28); }
-.pin-dot { width: 0.72rem; height: 0.72rem; border-radius: 9999px; background: var(--login-foreground); box-shadow: 0 0 0 3px oklch(1 0 0 / 0.06); animation: pin-pop .22s cubic-bezier(.2,1.5,.4,1); }
-.field-error .pin-box, .pin-boxes.field-error .pin-box { border-color: var(--destructive, oklch(0.6 0.2 25)); background: color-mix(in oklab, var(--destructive, oklch(0.6 0.2 25)) 14%, transparent); }
-.auth-toggle { background: oklch(1 0 0 / 0.05); border: 1px solid oklch(1 0 0 / 0.07); border-radius: 0.85rem; }
-.auth-toggle-indicator { background: oklch(1 0 0 / 0.1); border: 1px solid oklch(1 0 0 / 0.1); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.06); }
-.auth-toggle-option { color: oklch(1 0 0 / 0.72); }
-.auth-toggle-on { color: var(--login-foreground); background: transparent; box-shadow: none; }
-.password-toggle { color: oklch(1 0 0 / 0.62); }
-.password-toggle:hover { color: oklch(1 0 0 / 0.92); background: oklch(1 0 0 / 0.06); }
-.password-toggle:focus-visible { outline: 2px solid var(--login-accent); outline-offset: 2px; }
+.login-panel .pin-box-active { border-color: var(--login-accent); background: oklch(1 0 0 / 0.05); box-shadow: 0 0 0 3px var(--login-accent-ring), inset 0 1px 0 oklch(1 0 0 / 0.05); transform: none; }
+.login-panel .pin-box-filled { background: oklch(1 0 0 / 0.08); border-color: oklch(1 0 0 / 0.28); }
+.login-panel .pin-dot { width: 0.72rem; height: 0.72rem; border-radius: 9999px; background: var(--login-foreground); box-shadow: 0 0 0 3px oklch(1 0 0 / 0.06); animation: pin-pop .22s cubic-bezier(.2,1.5,.4,1); }
+.login-panel .field-error .pin-box, .login-panel .pin-boxes.field-error .pin-box { border-color: var(--destructive, oklch(0.6 0.2 25)); background: color-mix(in oklab, var(--destructive, oklch(0.6 0.2 25)) 14%, transparent); }
+.login-panel .auth-toggle { background: oklch(1 0 0 / 0.05); border: 1px solid oklch(1 0 0 / 0.07); border-radius: 0.85rem; }
+.login-panel .auth-toggle-indicator { background: oklch(1 0 0 / 0.1); border: 1px solid oklch(1 0 0 / 0.1); box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.06); }
+.login-panel .auth-toggle-option { color: oklch(1 0 0 / 0.72); }
+.login-panel .auth-toggle-on { color: var(--login-foreground); background: transparent; box-shadow: none; }
+.login-panel .password-toggle { color: oklch(1 0 0 / 0.62); }
+.login-panel .password-toggle:hover { color: oklch(1 0 0 / 0.92); background: oklch(1 0 0 / 0.06); }
+.login-panel .password-toggle:focus-visible { outline: 2px solid var(--login-accent); outline-offset: 2px; }
 .login-dot-mesh { background-image: radial-gradient(oklch(1 0 0 / 0.06) 1px, transparent 1px); background-size: 22px 22px; mask-image: linear-gradient(135deg, transparent, black 30%, black 70%, transparent); opacity: .55; }
 .login-desktop-vignette, .login-mobile-vignette { background: radial-gradient(120% 80% at 50% 40%, transparent 40%, oklch(0 0 0 / 0.35) 100%); pointer-events: none; }
 .login-arrow-heading { color: var(--login-accent); }
