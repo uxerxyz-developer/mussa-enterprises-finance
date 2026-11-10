@@ -470,7 +470,7 @@ function Login({ firstRun: needsSetup, onDone, requireUsername }: { firstRun: bo
   const savedLen = auth?.pinLength;
   const [mode, setMode] = useState<"pin" | "password">(savedMode);
   const activeMode = firstRun || forgot ? mode : savedMode;
-  const legacyPin = !firstRun && !forgot && savedMode === "pin" && !savedLen; // an older PIN: length unknown, single field until it is recorded
+  const legacyPin = !firstRun && !forgot && savedMode === "pin" && !savedLen;
   const pinLen = firstRun || forgot ? 6 : savedLen ?? 6;
   const cred = activeMode === "pin" ? "PIN" : "password";
   const strong = (v: string) => (activeMode === "pin" ? /^\d{6}$/.test(v) : v.length >= 6);
@@ -505,48 +505,66 @@ function Login({ firstRun: needsSetup, onDone, requireUsername }: { firstRun: bo
   };
   const submit = (e: React.FormEvent) => { e.preventDefault(); void run(); };
 
+  const heading = firstRun ? "Set Up Your Cash Control" : forgot ? "Reset password" : "Sign in";
+  const subheading = firstRun
+    ? "Choose a 6-digit PIN or a password to secure your ledger."
+    : forgot
+    ? "Confirm your username and registered email or phone."
+    : needUser
+    ? `Enter your username and ${cred}.`
+    : `Enter your ${cred} to unlock.`;
+
   return (
     <div className="login-screen relative grid min-h-screen bg-login-backdrop md:grid-cols-[58%_42%]">
-      {/* Mobile backdrop: same industrial photo + dark overlay behind the glass card */}
+      {/* Mobile backdrop */}
       <div aria-hidden="true" className="absolute inset-0 md:hidden">
         <img src={loginBg.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-br from-login-glass/55 via-login-tint/35 to-login-glass/55" />
-        <div className="login-mobile-vignette absolute inset-0" />
+        <div className="absolute inset-0 bg-gradient-to-b from-login-glass/80 via-login-tint/55 to-login-glass/95" />
       </div>
       <AmbientBrackets />
-      <div className="pointer-events-none absolute bottom-4 right-5 z-10 flex items-center gap-1.5 text-[10px] text-login-foreground/70 md:hidden">
-        <span>Developed by</span>
-        <img src={nexumLogo.url} alt="nexum systems" className="h-4 w-auto object-contain" />
-      </div>
-      <div
-        className="login-split-panel relative z-10 hidden flex-col justify-between gap-12 overflow-hidden py-12 pl-8 pr-[22%] text-login-foreground md:flex lg:pl-12"
-      >
+
+      {/* Left / desktop brand panel */}
+      <div className="login-split-panel relative z-10 hidden flex-col justify-between gap-12 overflow-hidden py-12 pl-8 pr-[22%] text-login-foreground md:flex lg:pl-12">
         <img src={loginBg.url} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-br from-login-glass/90 via-login-tint/75 to-login-glass/85" />
+        <div className="absolute inset-0 bg-gradient-to-br from-login-glass/92 via-login-tint/78 to-login-glass/88" />
         <div className="login-desktop-vignette absolute inset-0" />
         <div aria-hidden="true" className="login-dot-mesh pointer-events-none absolute inset-0" />
-        <div className="relative text-xs uppercase text-login-foreground/70">Mussa Enterprises · Finance Control</div>
+
+        <div className="relative text-xs uppercase tracking-[0.14em] text-login-foreground/70">
+          Mussa Enterprises · Finance Control
+        </div>
         <div className="relative">
-          <h2 className="text-3xl font-semibold leading-tight lg:text-4xl xl:text-5xl">
+          <h2 className="text-3xl font-semibold leading-[1.1] tracking-tight lg:text-4xl xl:text-5xl">
             Control your business<br />and finance your way
-            <span className="ml-1 inline-flex items-center gap-2 align-middle">
-              …<LoginArrow className="login-arrow-heading" />
+            <span className="ml-2 inline-flex align-middle">
+              <LoginArrow className="login-arrow-heading" />
             </span>
           </h2>
-          <p className="mt-5 max-w-md text-sm leading-relaxed text-login-foreground/80">Run your business with clarity and manage your finances with the help of a built-in AI-enabled voice assistant that handles your cash flow. Make smarter moves, stay in control, and grow on your own terms.</p>
+          <p className="mt-6 max-w-md text-sm leading-relaxed text-login-foreground/75">
+            Run your business with clarity and manage your finances with a built-in AI voice assistant that handles your cash flow. Make smarter moves, stay in control, and grow on your own terms.
+          </p>
         </div>
         <div className="relative flex items-center gap-2 text-xs text-login-foreground/70">
           <span>Developed by</span>
           <img src={nexumLogo.url} alt="nexum systems" className="h-5 w-auto object-contain" />
         </div>
       </div>
-      <div className="relative flex min-w-0 items-center justify-center px-6 pb-28 pt-48 md:px-4 md:py-8 lg:px-6">
-        <form onSubmit={submit} className="login-panel dark w-full max-w-sm space-y-4 rounded-2xl p-6 text-login-foreground lg:p-8">
-          <img src={whiteLogo} alt="Mussa Enterprises" className="mx-auto mb-2 h-auto w-64 max-w-full object-contain" />
-          <div className="border-t border-login-foreground/10 pt-4">
-            <h1 className="text-xl font-semibold">{firstRun ? "Set Up Your Cash Control" : forgot ? "Reset password" : "Sign in"}</h1>
-            <p className="mt-1 text-sm text-login-foreground/60">{firstRun ? "Choose a 6-digit PIN or a password to secure your ledger." : forgot ? "Confirm your username and registered email or phone." : needUser ? `Enter your username and ${cred}.` : `Enter your ${cred} to unlock.`}</p>
+
+      {/* Form panel */}
+      <div className="relative flex items-center justify-center px-4 py-8 sm:px-6">
+        <form
+          onSubmit={submit}
+          className="login-panel dark w-full max-w-[400px] space-y-5 rounded-2xl p-6 text-login-foreground sm:p-7 lg:p-8"
+        >
+          <div className="flex justify-center">
+            <img src={whiteLogo} alt="Mussa Enterprises" className="h-auto w-56 max-w-full object-contain" />
           </div>
+
+          <div className="space-y-1.5 border-t border-login-foreground/10 pt-5">
+            <h1 className="text-xl font-semibold tracking-tight sm:text-[1.375rem]">{heading}</h1>
+            <p className="text-sm leading-relaxed text-login-foreground/60">{subheading}</p>
+          </div>
+
           {(firstRun || forgot) && (
             <Field label="Company / Business Name">
               <TitleInput value={company} onValueChange={setCompany} placeholder="e.g. Ahmad Steel" />
@@ -557,29 +575,75 @@ function Login({ firstRun: needsSetup, onDone, requireUsername }: { firstRun: bo
               <Input autoFocus value={username} onChange={(e) => setUsername(e.target.value)} />
             </Field>
           )}
-          {(firstRun || forgot) && <Field label="Recovery Email or Phone"><Input value={recovery} onChange={(e) => setRecovery(e.target.value)} /></Field>}
-          {(firstRun || forgot) && <AuthModeToggle value={mode} onChange={(m) => { setMode(m); setPw(""); setPw2(""); }} />}
+          {(firstRun || forgot) && (
+            <Field label="Recovery Email or Phone">
+              <Input value={recovery} onChange={(e) => setRecovery(e.target.value)} />
+            </Field>
+          )}
+          {(firstRun || forgot) && (
+            <AuthModeToggle value={mode} onChange={(m) => { setMode(m); setPw(""); setPw2(""); }} />
+          )}
+
           <Field label={forgot ? (activeMode === "pin" ? "New PIN" : "New password") : activeMode === "pin" ? "PIN" : "Password"}>
             {activeMode === "pin" && !legacyPin ? (
-              <PinBoxes id="login-pin" length={pinLen} value={pw} onChange={setPw} autoFocus={!needUser} disabled={busy} onComplete={(v) => { if (!firstRun && !forgot && (!needUser || username.trim())) void run(v); }} />
+              <PinBoxes
+                id="login-pin"
+                length={pinLen}
+                value={pw}
+                onChange={setPw}
+                autoFocus={!needUser}
+                disabled={busy}
+                onComplete={(v) => { if (!firstRun && !forgot && (!needUser || username.trim())) void run(v); }}
+              />
             ) : activeMode === "pin" ? (
-              <Input id="login-pin" autoFocus={!needUser} type="password" inputMode="numeric" value={pw} onChange={(e) => setPw(e.target.value.replace(/\D/g, "").slice(0, 8))} />
+              <Input
+                id="login-pin"
+                autoFocus={!needUser}
+                type="password"
+                inputMode="numeric"
+                value={pw}
+                onChange={(e) => setPw(e.target.value.replace(/\D/g, "").slice(0, 8))}
+              />
             ) : (
               <PasswordField id="login-pin" autoFocus={!needUser} value={pw} onChange={setPw} />
             )}
           </Field>
+
           {(firstRun || forgot) && (
             <Field label={activeMode === "pin" ? "Confirm PIN" : "Confirm password"}>
-              {activeMode === "pin" ? <PinBoxes id="login-pin-2" length={6} value={pw2} onChange={setPw2} disabled={busy} /> : <PasswordField id="login-pin-2" value={pw2} onChange={setPw2} />}
+              {activeMode === "pin"
+                ? <PinBoxes id="login-pin-2" length={6} value={pw2} onChange={setPw2} disabled={busy} />
+                : <PasswordField id="login-pin-2" value={pw2} onChange={setPw2} />}
             </Field>
           )}
-          <Button type="submit" className="login-cta w-full" disabled={busy}>{firstRun ? "Create & Continue" : forgot ? "Reset & Sign in" : "Sign in"}</Button>
+
+          <Button type="submit" className="login-cta w-full" disabled={busy}>
+            {busy ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="login-spinner" aria-hidden="true" />
+                {firstRun ? "Setting up…" : forgot ? "Resetting…" : "Signing in…"}
+              </span>
+            ) : (
+              firstRun ? "Create & Continue" : forgot ? "Reset & Sign in" : "Sign in"
+            )}
+          </Button>
+
           {!needsSetup && (
-            <Button type="button" variant="link" onClick={() => setForgot((v) => !v)} className="w-full text-login-foreground/75 hover:text-login-foreground">
+            <Button
+              type="button"
+              variant="link"
+              onClick={() => setForgot((v) => !v)}
+              className="w-full text-login-foreground/70 hover:text-login-foreground"
+            >
               {forgot ? "Back to sign in" : "Forgot password?"}
             </Button>
           )}
         </form>
+      </div>
+
+      <div className="pointer-events-none absolute bottom-4 right-5 z-10 flex items-center gap-1.5 text-[10px] text-login-foreground/70 md:hidden">
+        <span>Developed by</span>
+        <img src={nexumLogo.url} alt="nexum systems" className="h-4 w-auto object-contain" />
       </div>
     </div>
   );
