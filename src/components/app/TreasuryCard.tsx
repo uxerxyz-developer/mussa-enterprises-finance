@@ -47,7 +47,7 @@ export function TreasuryCard({ editing, w }: { editing: boolean; w: number }) {
   }, [d]);
 
   const m = (v: number) => (hidden ? "Rs ••••••" : fmtPKR(v));
-  const pendingAmt = s.pending.reduce((x, e) => x + e.amount, 0);
+  const pendingAmt = s.pending.reduce((x, e) => x + fundAmount(e), 0);
   const toggle = (e: React.MouseEvent) => {
     e.stopPropagation(); haptic(8);
     setHidden((h) => { localStorage.setItem(HIDE_KEY, h ? "0" : "1"); return !h; });

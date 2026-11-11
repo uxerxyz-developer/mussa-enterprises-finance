@@ -54,7 +54,7 @@ export function ChequeStatusCard({ hidden }: { hidden: boolean }) {
   // A soft ping when a cheque newly becomes due while the app is open.
   const lastLate = useRef(overdue.length);
   useEffect(() => { if (overdue.length > lastLate.current) playSound("remind"); lastLate.current = overdue.length; }, [overdue.length]);
-  const sum = (l: Entry[]) => l.reduce((s, e) => s + e.amount, 0);
+  const sum = (l: Entry[]) => l.reduce((s, e) => s + fundAmount(e), 0);
   const ordered = [...overdue, ...pending.filter((e) => !isChequeOverdue(e, now))];
 
   const apply = () => {
