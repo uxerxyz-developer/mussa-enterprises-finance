@@ -1,4 +1,4 @@
-import { liveEntries, liveAccounts, notBounced, ENTRY_TYPES, type Data, type Entry } from "./db";
+import { liveEntries, liveAccounts, notBounced, fundAmount, ENTRY_TYPES, type Data, type Entry } from "./db";
 
 /** Analytics series derived from entries — no business logic changes, pure read-only aggregation. */
 
@@ -19,8 +19,8 @@ function signedFlow(e: Entry): number {
     if (e.payMode === "net" && e.method) return e.type === "sale" ? e.amount : -e.amount;
     return 0;
   }
-  if (t.flow === "in") return e.amount;
-  if (t.flow === "out") return -e.amount;
+  if (t.flow === "in") return fundAmount(e);
+  if (t.flow === "out") return -fundAmount(e);
   return 0;
 }
 

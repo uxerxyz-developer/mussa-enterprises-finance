@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EntriesTable } from "@/components/app/EntriesTable";
 import { Field, PageHeader, PrintHeader } from "@/components/app/inputs";
-import { CASH, fundLedger, fundList, liveEntries, updateEntry, useData, type ChequeStatus } from "@/lib/db";
+import { CASH, fundAmount, fundLedger, fundList, liveEntries, updateEntry, useData, type ChequeStatus } from "@/lib/db";
 import { Link } from "@tanstack/react-router";
 import { fmtDate, fmtPKR, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,7 @@ function CashBook() {
       <div className="no-print grid gap-4 md:grid-cols-3">
         <div className="rounded-lg border bg-card p-4"><div className="text-xs uppercase text-muted-foreground">Cash in Hand</div><div className="num mt-2 text-2xl font-semibold">{fmtPKR(cashInHand)}</div></div>
         <div className="rounded-lg border bg-card p-4"><div className="text-xs uppercase text-muted-foreground">All Banks (cleared)</div><div className="num mt-2 text-2xl font-semibold">{fmtPKR(bank)}</div><Link to="/banks" className="text-xs text-primary hover:underline">Bank statements →</Link></div>
-        <div className="rounded-lg border bg-card p-4"><div className="text-xs uppercase text-muted-foreground">Cheques Pending ({pending.length})</div><div className="num mt-2 text-2xl font-semibold text-warning">{fmtPKR(pending.reduce((s, e) => s + e.amount, 0))}</div></div>
+        <div className="rounded-lg border bg-card p-4"><div className="text-xs uppercase text-muted-foreground">Cheques Pending ({pending.length})</div><div className="num mt-2 text-2xl font-semibold text-warning">{fmtPKR(pending.reduce((s, e) => s + fundAmount(e), 0))}</div></div>
       </div>
 
       <div className="no-print rounded-lg border bg-card p-4">

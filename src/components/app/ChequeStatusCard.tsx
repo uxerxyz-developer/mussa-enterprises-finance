@@ -4,7 +4,7 @@ import { ArrowDownLeft, ArrowUpRight, CheckCircle2, FileText } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { playSound } from "@/lib/sounds";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { fundName, isNetPaid, liveEntries, updateEntry, useData, type ChequeStatus, type Entry } from "@/lib/db";
+import { fundAmount, fundName, isNetPaid, liveEntries, updateEntry, useData, type ChequeStatus, type Entry } from "@/lib/db";
 /** Money coming in: a received payment or a net sale. Everything else tracked here (issued payment, net purchase) is going out. */
 const isIncoming = (e: Entry) => e.type === "inward" || e.type === "sale";
 import { fmtDate, fmtPKR } from "@/lib/format";
@@ -54,7 +54,7 @@ export function ChequeStatusCard({ hidden }: { hidden: boolean }) {
   // A soft ping when a cheque newly becomes due while the app is open.
   const lastLate = useRef(overdue.length);
   useEffect(() => { if (overdue.length > lastLate.current) playSound("remind"); lastLate.current = overdue.length; }, [overdue.length]);
-  const sum = (l: Entry[]) => l.reduce((s, e) => s + e.amount, 0);
+  const sum = (l: Entry[]) => l.reduce((s, e) => s + fundAmount(e), 0);
   const ordered = [...overdue, ...pending.filter((e) => !isChequeOverdue(e, now))];
 
   const apply = () => {
