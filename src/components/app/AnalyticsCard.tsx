@@ -86,7 +86,7 @@ function ExpenseDonut({ items }: { items: ReturnType<typeof expenseBreakdown> })
 }
 
 /** Horizontal bars for top receivable / payable parties. */
-function PartyBars({ items, hidden }: { items: ReturnType<typeof topParties>; hidden?: boolean }) {
+function PartyBars({ items, hidden }: { items: ReturnType<typeof topParties>; hidden?: boolean | undefined }) {
   const max = Math.max(1, ...items.map((p) => Math.max(p.receivable, p.payable)));
   return (
     <ul className="space-y-2">
@@ -106,7 +106,7 @@ function PartyBars({ items, hidden }: { items: ReturnType<typeof topParties>; hi
   );
 }
 
-export function AnalyticsCard({ w, h, hidden }: { w: number; h: number; hidden?: boolean }) {
+export function AnalyticsCard({ w, h, hidden }: { w: number; h: number; hidden?: boolean | undefined }) {
   const d = useData();
   const a = useMemo(() => ({ trend: monthlyTrend(d), cats: expenseBreakdown(d), parties: topParties(d) }), [d]);
   const wide = w >= 3;

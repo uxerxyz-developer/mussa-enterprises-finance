@@ -32,7 +32,7 @@ export function monthlyTrend(d: Data, months = 6): MonthPoint[] {
     const dt = new Date(now.getFullYear(), now.getMonth() - i, 1);
     keys.push(`${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`);
   }
-  const points: MonthPoint[] = keys.map((k) => ({ key: k, label: MONTHS[Number(k.slice(5)) - 1], sales: 0, purchases: 0, expenses: 0, net: 0 }));
+  const points: MonthPoint[] = keys.map((k) => ({ key: k, label: MONTHS[Number(k.slice(5)) - 1] ?? "", sales: 0, purchases: 0, expenses: 0, net: 0 }));
   const byKey = new Map(points.map((p) => [p.key, p]));
   for (const e of liveEntries(d)) {
     const p = byKey.get(monthKey(e.date));
