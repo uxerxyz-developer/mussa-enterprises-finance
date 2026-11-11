@@ -8,6 +8,7 @@ import { EntryForm } from "@/components/app/EntryForm";
 import { TreasuryCard } from "@/components/app/TreasuryCard";
 import { ChequeStatusCard } from "@/components/app/ChequeStatusCard";
 import { QuickActions } from "@/components/app/QuickActions";
+import { AnalyticsCard } from "@/components/app/AnalyticsCard";
 import { AccountForm } from "@/components/app/AccountForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -225,6 +226,7 @@ const WIDGETS: Record<WidgetId, { to?: string; render: (c: Ctx) => ReactNode }> 
   loans: { to: "/loans", render: (c) => <Module c={c} icon={HandCoins} title="Personal Loans" tone="bg-chart-5" count="Open" /> },
   expenses: { to: "/expenses", render: (c) => <Module c={c} icon={Receipt} title="Expenses" tone="bg-metric-payable" count={money(c, c.monthExpenses)}><span className="text-xs text-muted-foreground">{c.expenseCount} expense entries in total</span></Module> },
   reports: { to: "/reports", render: (c) => <Module c={c} icon={BarChart3} title="Reports" tone="bg-primary" count="Open" /> },
+  analytics: { to: "/reports", render: (c) => <AnalyticsCard w={c.w} h={c.h} /> },
   electricity: { to: "/electricity", render: (c) => <Module c={c} icon={Zap} title="Electricity" tone="bg-chart-4" count={`${c.bills.length} bills`} /> },
 };
 
