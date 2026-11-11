@@ -1,4 +1,4 @@
-import { liveEntries, liveAccounts, notBounced, ENTRY_TYPES, type Data, type Entry } from "./db";
+import { liveEntries, liveAccounts, notBounced, fundAmount, ENTRY_TYPES, type Data, type Entry } from "./db";
 
 /** Analytics series derived from entries — no business logic changes, pure read-only aggregation. */
 
