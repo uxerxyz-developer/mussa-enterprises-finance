@@ -67,10 +67,20 @@ export interface Entry {
   payMode?: "credit" | "advance" | "net" | undefined;
   receivedBy?: string | undefined;
   linkedId?: string | undefined;
+  /** Payment Received: third-party cheques taken into hand (vault). They never touch own bank/cash. */
+  tpCheques?: TPCheque[] | undefined;
+  /** Payment Issued: ids of in-hand third-party cheques forwarded (endorsed) to this party. */
+  forwardIds?: string[] | undefined;
+  /** Portion of `amount` settled by third-party cheques; only `amount - tpAmount` moves own funds. */
+  tpAmount?: number | undefined;
+  /** Saved as draft: no effect on any ledger, balance, report or vault until posted. */
+  draft?: boolean | undefined;
   createdAt: string;
   updatedAt?: string | undefined;
   deletedAt?: string | undefined;
 }
+
+export interface TPCheque { id: string; chequeNo: string; bank: string; drawer?: string | undefined; date: string; amount: number }
 
 /** Manual production run: converts one material (e.g. Scrap) into another (e.g. Billet) by weight. */
 export interface Production {
@@ -536,7 +546,37 @@ export function removeNamed(kind: "categories", id: string) {
 
 /* ---------- queries ---------- */
 export const liveAccounts = (d: Data) => d.accounts.filter((a) => !a.deletedAt);
-export const liveEntries = (d: Data) => d.entries.filter((e) => !e.deletedAt);
+export const liveEntries = (d: Data) => d.entries.filter((e) => !e.deletedAt && !e.draft);
+export const draftEntries = (d: Data) => d.entries.filter((e) => !e.deletedAt && e.draft);
+/** Amount that moves own cash/bank (total minus third-party cheque portion). */
+export const fundAmount = (e: Pick<Entry, "amount" | "tpAmount">) => Math.max(0, e.amount - (e.tpAmount ?? 0));
+
+/* ---------- third-party cheques vault ---------- */
+export type VaultStatus = "in_hand" | "forwarded" | "held";
+export interface VaultCheque extends TPCheque { status: VaultStatus; fromEntryId: string; fromAccountId?: string | undefined; toEntryId?: string | undefined; toAccountId?: string | undefined }
+/** Derived from posted vouchers, so delete / undo / restore always keep the vault in sync. `ignoreEntryId` frees cheques held by the voucher being edited. */
+export function chequeVault(d: Data, ignoreEntryId?: string): VaultCheque[] {
+  const used = new Map<string, { e: Entry; held: boolean }>();
+  for (const e of d.entries) if (!e.deletedAt && e.id !== ignoreEntryId && e.type === "outward") for (const id of e.forwardIds ?? []) used.set(id, { e, held: !!e.draft });
+  const out: VaultCheque[] = [];
+  for (const e of liveEntries(d)) {
+    if (e.type !== "inward" || e.chequeStatus === "bounced") continue;
+    for (const c of e.tpCheques ?? []) {
+      const u = used.get(c.id);
+      out.push({ ...c, fromEntryId: e.id, fromAccountId: e.accountId, status: !u ? "in_hand" : u.held ? "held" : "forwarded", toEntryId: u?.e.id, toAccountId: u?.e.accountId });
+    }
+  }
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+}
+export function postDraft(id: string) {
+  const d = data;
+  const e = d.entries.find((x) => x.id === id);
+  if (!e?.draft) return { ok: false, error: "Draft not found" };
+  const free = new Set(chequeVault(d, id).filter((c) => c.status === "in_hand").map((c) => c.id));
+  if ((e.forwardIds ?? []).some((c) => !free.has(c))) return { ok: false, error: "A selected cheque is no longer in hand" };
+  commit((dd) => { const x = dd.entries.find((y) => y.id === id); if (x) { delete x.draft; x.updatedAt = new Date().toISOString(); } });
+  return { ok: true as const };
+}
 
 /** Debit (+) increases what party owes us; credit (-) decreases. */
 export function signedForAccount(e: Entry) {
@@ -560,14 +600,15 @@ export function signedForAccount(e: Entry) {
 export function accountBalance(d: Data, id: string) {
   const a = d.accounts.find((x) => x.id === id);
   let b = a?.openingBalance ?? 0;
-  for (const e of d.entries) if (!e.deletedAt && e.accountId === id) b += signedForAccount(e);
+  for (const e of d.entries) if (!e.deletedAt && !e.draft && e.accountId === id) b += signedForAccount(e);
   return b;
 }
 
 export function cashFlow(e: Entry) {
   const f = ENTRY_TYPES[e.type].flow;
   if (e.chequeStatus === "bounced") return 0;
-  return f === "in" ? e.amount : f === "out" ? -e.amount : 0;
+  const a = fundAmount(e);
+  return f === "in" ? a : f === "out" ? -a : 0;
 }
 
 /** Cash in hand = physical cash only. Online and cheque payments live in their bank's ledger. */
@@ -590,8 +631,10 @@ export function entryFunds(e: Entry): { fund: string; delta: number }[] {
     if (!isNetPaid(e)) return [];
     return [{ fund: e.method === "cash" ? CASH : e.bankId ?? UNASSIGNED_BANK, delta: e.type === "sale" ? e.amount : -e.amount }];
   }
+  const a = fundAmount(e);
+  if (a <= 0) return [];
   const fund = !e.method || e.method === "cash" ? CASH : e.bankId ?? UNASSIGNED_BANK;
-  return [{ fund, delta: flow === "in" ? e.amount : -e.amount }];
+  return [{ fund, delta: flow === "in" ? a : -a }];
 }
 
 export const liveBanks = (d: Data) => d.banks.filter((b) => !b.deletedAt);
