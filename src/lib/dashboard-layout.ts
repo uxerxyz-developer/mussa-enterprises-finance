@@ -3,20 +3,20 @@ import { useSyncExternalStore } from "react";
 /** Dashboard widget layout: order + size per widget, persisted per device. */
 export type WidgetId =
   | "treasury" | "cheques" | "cash" | "bank" | "receivable" | "payable" | "advances" | "stock" | "quick" | "activity" | "heats"
-  | "vouchers" | "accounts" | "sales" | "purchases" | "cashbook" | "workers" | "loans" | "expenses" | "reports" | "electricity" | "monthly";
+  | "vouchers" | "accounts" | "sales" | "purchases" | "cashbook" | "workers" | "loans" | "expenses" | "reports" | "electricity" | "monthly" | "analytics";
 export type WidgetLayout = { id: WidgetId; w: number; h: number };
 
 export const WIDGET_LABELS: Record<WidgetId, string> = {
   treasury: "Treasury Position", cheques: "Cheque Status", cash: "Cash in hand", bank: "Bank balance", receivable: "Receivables", payable: "Payables", advances: "Advances",
   stock: "Raw material stock", quick: "Quick actions", activity: "Recent activity", heats: "Production heats",
   vouchers: "Vouchers", accounts: "Accounts / Ledgers", sales: "Sales", purchases: "Purchases", cashbook: "Cash Book",
-  workers: "Workers", loans: "Personal Loans", expenses: "Expenses", reports: "Reports", electricity: "Electricity", monthly: "This month",
+  workers: "Workers", loans: "Personal Loans", expenses: "Expenses", reports: "Reports", electricity: "Electricity", monthly: "This month", analytics: "Analytics",
 };
 
 export const DEFAULT_LAYOUT: WidgetLayout[] = [
   // Money and actions first, then a KPI strip, stock beside recent activity, production, and shortcuts last.
   { id: "quick", w: 2, h: 3 }, { id: "treasury", w: 2, h: 3 }, { id: "cheques", w: 2, h: 1 },
-  { id: "monthly", w: 2, h: 1 }, { id: "vouchers", w: 1, h: 1 }, { id: "advances", w: 1, h: 1 },
+  { id: "monthly", w: 2, h: 1 }, { id: "analytics", w: 4, h: 2 }, { id: "vouchers", w: 1, h: 1 }, { id: "advances", w: 1, h: 1 },
   { id: "stock", w: 2, h: 2 }, { id: "activity", w: 2, h: 2 },
   { id: "heats", w: 4, h: 2 },
   { id: "accounts", w: 1, h: 1 }, { id: "workers", w: 2, h: 1 }, { id: "loans", w: 1, h: 1 }, { id: "reports", w: 4, h: 1 },
