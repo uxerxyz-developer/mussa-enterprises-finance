@@ -13,7 +13,7 @@ import { AccountForm } from "@/components/app/AccountForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { workerTotals, CASH, ENTRY_TYPES, fundList, isNetPaid, liveAccounts, liveEntries, liveProduction, notBounced, partyTotals, stockSummary, useData, type EntryType } from "@/lib/db";
+import { workerTotals, CASH, fundAmount, ENTRY_TYPES, fundList, isNetPaid, liveAccounts, liveEntries, liveProduction, notBounced, partyTotals, stockSummary, useData, type EntryType } from "@/lib/db";
 import { fmtDate, fmtPKR, fmtTon, todayISO } from "@/lib/format";
 import { ALL_WIDGETS, dashboard, haptic, MAX_H, MAX_W, useDashboard, WIDGET_LABELS, type WidgetId, type WidgetLayout } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";

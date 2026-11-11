@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EntriesTable } from "@/components/app/EntriesTable";
 import { Field, PageHeader, PrintHeader } from "@/components/app/inputs";
-import { CASH, fundLedger, fundList, liveEntries, updateEntry, useData, type ChequeStatus } from "@/lib/db";
+import { CASH, fundAmount, fundLedger, fundList, liveEntries, updateEntry, useData, type ChequeStatus } from "@/lib/db";
 import { Link } from "@tanstack/react-router";
 import { fmtDate, fmtPKR, todayISO } from "@/lib/format";
 import { cn } from "@/lib/utils";

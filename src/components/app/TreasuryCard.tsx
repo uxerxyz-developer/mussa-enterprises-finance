@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowDownLeft, ArrowUpRight, Eye, EyeOff, FileCheck2, Landmark, Wallet } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { accountBalance, entryState, fundList, fundName, liveAccounts, liveEntries, updateEntry, useData, type ChequeStatus } from "@/lib/db";
+import { accountBalance, entryState, fundAmount, fundList, fundName, liveAccounts, liveEntries, updateEntry, useData, type ChequeStatus } from "@/lib/db";
 import { fmtDate, fmtPKR, todayISO } from "@/lib/format";
 import { haptic } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
