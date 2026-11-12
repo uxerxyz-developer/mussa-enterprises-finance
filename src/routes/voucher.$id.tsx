@@ -112,6 +112,8 @@ function VoucherPage() {
         <Row label={e.type === "purchase" ? "Purchase Type" : "Sale Type"} value={e.type === "sale" || e.type === "purchase" ? e.payMode === "advance" || e.payMode === "net" ? (e.type === "purchase" ? "Net Purchase" : "Net Sale") : (e.type === "purchase" ? "Credit Purchase" : "Credit Sale") : undefined} />
         <Row label="Remarks" value={e.remarks} />
         <Row label="Payment Method" value={e.method ? METHODS[e.method] : undefined} />
+        {(() => { const cs = e.type === "inward" ? e.tpCheques ?? [] : (e.forwardIds ?? []).map((id) => d.entries.flatMap((x) => x.tpCheques ?? []).find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c); return cs.length ? <Row label={e.type === "inward" ? "Third-party Cheques" : "Forwarded Cheques"} value={cs.map((c) => `${c.bank}${c.chequeNo ? ` #${c.chequeNo}` : ""} Rs ${c.amount.toLocaleString("en-PK")}`).join(", ") + (e.tpAmount && e.amount > e.tpAmount ? ` · Own funds Rs ${(e.amount - e.tpAmount).toLocaleString("en-PK")}` : "")} /> : null; })()}
+        {e.draft && <Row label="Status" value="DRAFT — not posted" />}
         {e.type === "transfer" ? <Row label="Transfer" value={bankDetails || undefined} /> : payRows.length > 0 && <PaymentTable numberLabel={e.method === "cheque" ? "Cheque #" : "Ref #"} rows={payRows} />}
         {a && (() => {
           const eff = signedForAccount(e);
