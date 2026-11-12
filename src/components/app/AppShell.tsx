@@ -12,12 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { AccountSearch } from "./inputs";
-import { AuthScreen } from "./AuthScreen";
-import { accountBalance, addAccount, addBank, addEntry, initials, type EntryType, ENTRY_TYPES, findDuplicate, getData, liveAccounts, liveBanks, loadData, searchAccounts, redo, takeSnapshot, undo, useData, useLoaded } from "@/lib/db";
+import { AccountSearch, Field, TitleInput } from "./inputs";
+import { AuthModeToggle, PasswordField, PinBoxes } from "./AuthInput";
+import { accountBalance, addAccount, addBank, addEntry, initials, type EntryType, changePassword, checkPw, ENTRY_TYPES, findDuplicate, getData, liveAccounts, liveBanks, loadData, searchAccounts, matchesRecovery, redo, rememberPinLength, setupAuth, takeSnapshot, undo, useData, useLoaded } from "@/lib/db";
 import { norm, todayISO } from "@/lib/format";
 import { Logo } from "@/components/app/Logo";
-import { mussaMark } from "@/lib/logo-images";
+import { mussaMark, whiteLogo } from "@/lib/logo-images";
+import loginBg from "@/assets/login-industrial.webp.asset.json";
+import nexumLogo from "@/assets/nexum-systems.webp.asset.json";
 import micLightIdle from "@/assets/mic-icon-v8-light-idle.png.asset.json";
 import micDarkIdle from "@/assets/mic-icon-v8-dark-idle.png.asset.json";
 import { backupToCloud, scheduleAutoBackup } from "@/lib/cloud";
@@ -28,6 +30,7 @@ import { VoiceSetupCard, VoiceSettingsSheet } from "./voice/VoiceSettings";
 import { AppearancePanel } from "./AppearancePanel";
 import { WorkerPaymentFix } from "./WorkerPaymentFix";
 import { applyAppearance } from "@/lib/appearance";
+import { fieldError } from "@/lib/field-error";
 import { playSound } from "@/lib/sounds";
 import { switchThemeAnimated } from "@/lib/theme-transition";
 import { flushSync } from "react-dom";
@@ -152,7 +155,7 @@ export function AppShell() {
   }, []);
 
   if (!loaded || !minDone) return <SplashScreen />;
-  if (!d.auth || !authed) return <AuthScreen firstRun={!d.auth} requireUsername={localStorage.getItem(LOGGED_OUT) === "1"} onDone={() => { sessionStorage.setItem(SESSION, "1"); localStorage.removeItem(LOGGED_OUT); setAuthed(true); }} />;
+  if (!d.auth || !authed) return <Login firstRun={!d.auth} requireUsername={localStorage.getItem(LOGGED_OUT) === "1"} onDone={() => { sessionStorage.setItem(SESSION, "1"); localStorage.removeItem(LOGGED_OUT); setAuthed(true); }} />;
   const toggleTheme = () => {
     const next = !(dark ?? false);
     switchThemeAnimated(next, () => {
@@ -399,6 +402,195 @@ function UserBlock({ dark, onToggleTheme, onLogout }: { dark: boolean; onToggleT
         <button onClick={onToggleTheme} aria-label="Toggle theme" title="Toggle theme" className={iconBtn}>{dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</button>
         <button onClick={() => onLogout()} aria-label="Lock app" title="Lock app" className={iconBtn}><Lock className="h-4 w-4" /></button>
         <button onClick={() => onLogout(true)} aria-label="Log out" title="Log out" className={iconBtn}><LogOut className="h-4 w-4" /></button>
+      </div>
+    </div>
+  );
+}
+
+function LoginArrow({ className = "", count = 1 }: { className?: string; count?: 1 | 2 }) {
+  const d = count === 2 ? "M18 16 L50 50 L18 84 M52 16 L84 50 L52 84" : "M30 16 L62 50 L30 84";
+  const vb = count === 2 ? "0 0 140 100" : "0 0 110 100";
+  return (
+    <svg aria-hidden="true" viewBox={vb} className={`login-arrow ${className}`}>
+      <g transform="skewX(-14) translate(14 0)" fill="none" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round">
+        <g className="login-arrow-wave"><path d={d} stroke="currentColor" /></g>
+        <g className="login-arrow-wave login-arrow-wave-2"><path d={d} stroke="currentColor" /></g>
+        <g className="login-arrow-main"><path d={d} stroke="currentColor" /></g>
+      </g>
+    </svg>
+  );
+}
+
+function LoginGlyph({ count, size }: { count: 1 | 2; size: number }) {
+  const d = count === 2 ? "M18 16 L50 50 L18 84 M52 16 L84 50 L52 84" : "M30 16 L62 50 L30 84";
+  const w = count === 2 ? 140 : 110;
+  return (
+    <svg viewBox={`0 0 ${w} 100`} width={(size * w) / 100} height={size} className="login-arrow block">
+      <g transform="skewX(-14) translate(14 0)" fill="none" stroke="currentColor" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></g>
+    </svg>
+  );
+}
+
+type Ambient = { id: number; c: 1 | 2; top: number; left: number; size: number };
+const AMBIENT_CYCLE_MS = 6000;
+
+// Mobile-only: each cycle shows 2-4 small brackets at random spots and sizes, fading in then out.
+function AmbientBrackets() {
+  const [items, setItems] = useState<Ambient[]>([]);
+  useEffect(() => {
+    let seq = 0;
+    const roll = () => {
+      const n = 2 + Math.floor(Math.random() * 3);
+      setItems(Array.from({ length: n }, () => ({
+        id: seq++,
+        c: Math.random() < 0.4 ? 2 : 1,
+        top: 6 + Math.random() * 84,
+        left: 6 + Math.random() * 80,
+        size: 20 + Math.random() * 10,
+      })));
+    };
+    roll();
+    const t = setInterval(roll, AMBIENT_CYCLE_MS);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden md:hidden">
+      {items.map((b, i) => (
+        <span key={b.id} className="login-ambient" style={{ top: `${b.top}%`, left: `${b.left}%`, animationDelay: `${i * 0.5}s` }}>
+          <LoginGlyph count={b.c} size={b.size} />
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function Login({ firstRun: needsSetup, onDone, requireUsername }: { firstRun: boolean; onDone: () => void; requireUsername: boolean }) {
+  // First install has no credentials yet: land directly on the setup form.
+  const firstRun = needsSetup;
+  const [company, setCompany] = useState("Mussa Enterprises");
+  const [username, setUsername] = useState("");
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [forgot, setForgot] = useState(false);
+  const [recovery, setRecovery] = useState("");
+  const needUser = firstRun || forgot || requireUsername;
+
+  const auth = getData().auth;
+  const savedMode: "pin" | "password" = auth?.mode === "password" ? "password" : "pin";
+  const savedLen = auth?.pinLength;
+  const [mode, setMode] = useState<"pin" | "password">(savedMode);
+  const activeMode = firstRun || forgot ? mode : savedMode;
+  const legacyPin = !firstRun && !forgot && savedMode === "pin" && !savedLen; // an older PIN: length unknown, single field until it is recorded
+  const pinLen = firstRun || forgot ? 6 : savedLen ?? 6;
+  const cred = activeMode === "pin" ? "PIN" : "password";
+  const strong = (v: string) => (activeMode === "pin" ? /^\d{6}$/.test(v) : v.length >= 6);
+  const rule = activeMode === "pin" ? "PIN must be exactly 6 digits" : "Password must be at least 6 characters";
+
+  const run = async (override?: string) => {
+    const p = override ?? pw;
+    if ((needUser && !username.trim()) || !p) { toast.error(needUser ? `Username and ${cred} are required` : `${cred === "PIN" ? "PIN" : "Password"} is required`); return; }
+    setBusy(true);
+    if (forgot) {
+      const d = getData();
+      const ok = d.auth && norm(username) === norm(d.auth.username) && matchesRecovery(recovery);
+      if (!ok) { setBusy(false); toast.error("Username and registered email or phone do not match"); return; }
+      if (!strong(p) || p !== pw2) { setBusy(false); toast.error(!strong(p) ? rule : "The two entries do not match"); return; }
+      await changePassword(p, mode);
+      toast.success(`${cred === "PIN" ? "PIN" : "Password"} reset. You are signed in.`);
+      setBusy(false);
+      onDone();
+      return;
+    }
+    if (firstRun) {
+      if (!strong(p)) { setBusy(false); toast.error(rule); return; }
+      if (p !== pw2) { setBusy(false); toast.error("The two entries do not match"); return; }
+      if (!recovery.trim()) { setBusy(false); toast.error("Recovery email or phone is required"); return; }
+      await setupAuth(username.trim(), p, company.trim(), recovery.includes("@") ? recovery : "", recovery.includes("@") ? "" : recovery, mode);
+      onDone();
+    } else if (await checkPw(p, needUser ? username : undefined)) {
+      if (legacyPin && /^\d+$/.test(p)) rememberPinLength(p.length);
+      onDone();
+    } else { fieldError("login-pin", needUser ? `Wrong username or ${cred}` : `Wrong ${cred}`); setPw(""); }
+    setBusy(false);
+  };
+  const submit = (e: React.FormEvent) => { e.preventDefault(); void run(); };
+
+  return (
+    <div className="login-screen relative grid min-h-screen bg-login-backdrop md:grid-cols-[58%_42%]">
+      {/* Mobile backdrop: same industrial photo + dark overlay behind the glass card */}
+      <div aria-hidden="true" className="absolute inset-0 md:hidden">
+        <img src={loginBg.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-login-glass/55 via-login-tint/35 to-login-glass/55" />
+        <div className="login-mobile-vignette absolute inset-0" />
+      </div>
+      <AmbientBrackets />
+      <div className="pointer-events-none absolute bottom-4 right-5 z-10 flex items-center gap-1.5 text-[10px] text-login-foreground/70 md:hidden">
+        <span>Developed by</span>
+        <img src={nexumLogo.url} alt="nexum systems" className="h-4 w-auto object-contain" />
+      </div>
+      <div
+        className="login-split-panel relative z-10 hidden flex-col justify-between gap-12 overflow-hidden py-12 pl-8 pr-[22%] text-login-foreground md:flex lg:pl-12"
+      >
+        <img src={loginBg.url} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-login-glass/90 via-login-tint/75 to-login-glass/85" />
+        <div className="login-desktop-vignette absolute inset-0" />
+        <div aria-hidden="true" className="login-dot-mesh pointer-events-none absolute inset-0" />
+        <div className="relative text-xs uppercase text-login-foreground/70">Mussa Enterprises · Finance Control</div>
+        <div className="relative">
+          <h2 className="text-3xl font-semibold leading-tight lg:text-4xl xl:text-5xl">
+            Control your business<br />and finance your way
+            <span className="ml-1 inline-flex items-center gap-2 align-middle">
+              …<LoginArrow className="login-arrow-heading" />
+            </span>
+          </h2>
+          <p className="mt-5 max-w-md text-sm leading-relaxed text-login-foreground/80">Run your business with clarity and manage your finances with the help of a built-in AI-enabled voice assistant that handles your cash flow. Make smarter moves, stay in control, and grow on your own terms.</p>
+        </div>
+        <div className="relative flex items-center gap-2 text-xs text-login-foreground/70">
+          <span>Developed by</span>
+          <img src={nexumLogo.url} alt="nexum systems" className="h-5 w-auto object-contain" />
+        </div>
+      </div>
+      <div className="relative flex min-w-0 items-center justify-center px-6 pb-28 pt-48 md:px-4 md:py-8 lg:px-6">
+        <form onSubmit={submit} className="login-panel dark w-full max-w-sm space-y-4 rounded-2xl p-6 text-login-foreground lg:p-8">
+          <img src={whiteLogo} alt="Mussa Enterprises" className="mx-auto mb-2 h-auto w-64 max-w-full object-contain" />
+          <div className="border-t border-login-foreground/10 pt-4">
+            <h1 className="text-xl font-semibold">{firstRun ? "Set Up Your Cash Control" : forgot ? "Reset password" : "Sign in"}</h1>
+            <p className="mt-1 text-sm text-login-foreground/60">{firstRun ? "Choose a 6-digit PIN or a password to secure your ledger." : forgot ? "Confirm your username and registered email or phone." : needUser ? `Enter your username and ${cred}.` : `Enter your ${cred} to unlock.`}</p>
+          </div>
+          {(firstRun || forgot) && (
+            <Field label="Company / Business Name">
+              <TitleInput value={company} onValueChange={setCompany} placeholder="e.g. Ahmad Steel" />
+            </Field>
+          )}
+          {needUser && (
+            <Field label="Username">
+              <Input autoFocus value={username} onChange={(e) => setUsername(e.target.value)} />
+            </Field>
+          )}
+          {(firstRun || forgot) && <Field label="Recovery Email or Phone"><Input value={recovery} onChange={(e) => setRecovery(e.target.value)} /></Field>}
+          {(firstRun || forgot) && <AuthModeToggle value={mode} onChange={(m) => { setMode(m); setPw(""); setPw2(""); }} />}
+          <Field label={forgot ? (activeMode === "pin" ? "New PIN" : "New password") : activeMode === "pin" ? "PIN" : "Password"}>
+            {activeMode === "pin" && !legacyPin ? (
+              <PinBoxes id="login-pin" length={pinLen} value={pw} onChange={setPw} autoFocus={!needUser} disabled={busy} onComplete={(v) => { if (!firstRun && !forgot && (!needUser || username.trim())) void run(v); }} />
+            ) : activeMode === "pin" ? (
+              <Input id="login-pin" autoFocus={!needUser} type="password" inputMode="numeric" value={pw} onChange={(e) => setPw(e.target.value.replace(/\D/g, "").slice(0, 8))} />
+            ) : (
+              <PasswordField id="login-pin" autoFocus={!needUser} value={pw} onChange={setPw} />
+            )}
+          </Field>
+          {(firstRun || forgot) && (
+            <Field label={activeMode === "pin" ? "Confirm PIN" : "Confirm password"}>
+              {activeMode === "pin" ? <PinBoxes id="login-pin-2" length={6} value={pw2} onChange={setPw2} disabled={busy} /> : <PasswordField id="login-pin-2" value={pw2} onChange={setPw2} />}
+            </Field>
+          )}
+          <Button type="submit" className="login-cta w-full" disabled={busy}>{firstRun ? "Create & Continue" : forgot ? "Reset & Sign in" : "Sign in"}</Button>
+          {!needsSetup && (
+            <Button type="button" variant="link" onClick={() => setForgot((v) => !v)} className="w-full text-login-foreground/75 hover:text-login-foreground">
+              {forgot ? "Back to sign in" : "Forgot password?"}
+            </Button>
+          )}
+        </form>
       </div>
     </div>
   );
