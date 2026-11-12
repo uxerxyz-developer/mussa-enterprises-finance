@@ -5,7 +5,7 @@ import { Download, RotateCcw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { AuthModeToggle, PasswordCreate, PasswordField, PinBoxes, PinCreate } from "@/components/app/AuthInput";
+import { AuthModeToggle, PasswordField, PinBoxes } from "@/components/app/AuthInput";
 import { playSound, setSoundsEnabled, soundsEnabled } from "@/lib/sounds";
 import { Field, PageHeader, TitleInput } from "@/components/app/inputs";
 import { CloudBackup } from "@/components/app/CloudBackup";
@@ -73,7 +73,7 @@ function SettingsPage() {
         <form className="space-y-4 rounded-lg border bg-card p-5" onSubmit={async (e) => {
           e.preventDefault();
           if (!(await checkPw(oldPw))) { toast.error("Current PIN or password is wrong"); return; }
-          if (newMode === "pin" ? !/^\d{4}$/.test(pw) : pw.length < 6) { toast.error(newMode === "pin" ? "Create and confirm a 4-digit PIN" : "Create and confirm a password of at least 6 characters"); return; }
+          if (newMode === "pin" ? !/^\d{6}$/.test(pw) : pw.length < 6) { toast.error(newMode === "pin" ? "PIN must be exactly 6 digits" : "Password must be at least 6 characters"); return; }
           await changePassword(pw, newMode); setOldPw(""); setPw(""); toast.success(newMode === "pin" ? "PIN changed" : "Password changed");
         }}>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Change PIN or Password</h2>
@@ -81,10 +81,10 @@ function SettingsPage() {
             {d.auth?.mode !== "password" && d.auth?.pinLength ? <PinBoxes id="old-pin" length={d.auth.pinLength} value={oldPw} onChange={setOldPw} /> : <PasswordField id="old-pin" value={oldPw} onChange={setOldPw} />}
           </Field>
           <AuthModeToggle value={newMode} onChange={(m) => { setNewMode(m); setPw(""); }} />
-          <Field label={newMode === "pin" ? "New 4-digit PIN" : "New password"}>
-            {newMode === "pin" ? <PinCreate key="npin" length={4} onConfirmed={setPw} id="new-pin" /> : <PasswordCreate key="npw" onConfirmed={setPw} />}
+          <Field label={newMode === "pin" ? "New 6-digit PIN" : "New password"}>
+            {newMode === "pin" ? <PinBoxes id="new-pin" length={6} value={pw} onChange={setPw} /> : <PasswordField id="new-pin" value={pw} onChange={setPw} />}
           </Field>
-          <div className="flex justify-end"><Button type="submit" disabled={!pw}>Update</Button></div>
+          <div className="flex justify-end"><Button type="submit">Update</Button></div>
         </form>
 
         <div className="space-y-4 rounded-lg border bg-card p-5">
