@@ -3,7 +3,8 @@ import { useSyncExternalStore } from "react";
 /** Dashboard widget layout: order + size per widget, persisted per device. */
 export type WidgetId =
   | "treasury" | "cheques" | "cash" | "bank" | "receivable" | "payable" | "advances" | "stock" | "quick" | "activity" | "heats"
-  | "vouchers" | "accounts" | "sales" | "purchases" | "cashbook" | "workers" | "loans" | "expenses" | "reports" | "electricity" | "monthly" | "analytics";
+  | "vouchers" | "accounts" | "sales" | "purchases" | "cashbook" | "workers" | "loans" | "expenses" | "reports" | "electricity" | "monthly" | "analytics"
+  | "drafts" | "cheques_hand";
 export type WidgetLayout = { id: WidgetId; w: number; h: number };
 
 export const WIDGET_LABELS: Record<WidgetId, string> = {
@@ -11,11 +12,13 @@ export const WIDGET_LABELS: Record<WidgetId, string> = {
   stock: "Raw material stock", quick: "Quick actions", activity: "Recent activity", heats: "Production heats",
   vouchers: "Vouchers", accounts: "Accounts / Ledgers", sales: "Sales", purchases: "Purchases", cashbook: "Cash Book",
   workers: "Workers", loans: "Personal Loans", expenses: "Expenses", reports: "Reports", electricity: "Electricity", monthly: "This month", analytics: "Analytics",
+  drafts: "Drafts", cheques_hand: "Cheques in Hand",
 };
 
 export const DEFAULT_LAYOUT: WidgetLayout[] = [
   // Money and actions first, then a KPI strip, stock beside recent activity, production, and shortcuts last.
   { id: "quick", w: 2, h: 3 }, { id: "treasury", w: 2, h: 3 }, { id: "cheques", w: 2, h: 1 },
+  { id: "cheques_hand", w: 1, h: 1 }, { id: "drafts", w: 1, h: 1 },
   { id: "monthly", w: 2, h: 1 }, { id: "analytics", w: 4, h: 2 }, { id: "vouchers", w: 1, h: 1 }, { id: "advances", w: 1, h: 1 },
   { id: "stock", w: 2, h: 2 }, { id: "activity", w: 2, h: 2 },
   { id: "heats", w: 4, h: 2 },
@@ -55,6 +58,16 @@ function load() {
       if (!state.layout.some((x) => x.id === "cheques")) {
         const i = state.layout.findIndex((x) => x.id === "quick");
         const l = [...state.layout]; l.splice(i < 0 ? 1 : i + 1, 0, { id: "cheques", w: 2, h: 1 });
+        state = { ...state, layout: l };
+        localStorage.setItem(KEY, JSON.stringify(state.layout));
+      }
+    }
+    if (!localStorage.getItem(KEY + "-drafts-chq-hand")) {
+      localStorage.setItem(KEY + "-drafts-chq-hand", "1");
+      const add = ([{ id: "cheques_hand", w: 1, h: 1 }, { id: "drafts", w: 1, h: 1 }] as WidgetLayout[]).filter((x) => !state.layout.some((y) => y.id === x.id));
+      if (add.length) {
+        const i = state.layout.findIndex((x) => x.id === "cheques");
+        const l = [...state.layout]; l.splice(i < 0 ? l.length : i + 1, 0, ...add);
         state = { ...state, layout: l };
         localStorage.setItem(KEY, JSON.stringify(state.layout));
       }

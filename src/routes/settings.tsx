@@ -96,7 +96,7 @@ function SettingsPage() {
             <input ref={file} type="file" accept=".json,application/json" hidden onChange={async (e) => {
               const f = e.target.files?.[0]; e.target.value = "";
               if (!f) return;
-              if (!confirm("Importing will replace all current data (you can undo with Ctrl+Z). Continue?")) return;
+              if (!confirm("Importing will replace all current data. Continue?")) return;
               try { takeSnapshot(); importJSON(await f.text()); toast.success("Backup imported"); } catch { toast.error("This is not a valid backup file"); }
             }} />
           </div>
@@ -113,7 +113,7 @@ function SettingsPage() {
             {snaps.map((s) => (
               <li key={s.at} className="flex items-center justify-between py-2">
                 {fmtDateTime(s.at)}
-                <Button size="sm" variant="ghost" onClick={() => { if (confirm("Restore data to this point? (Ctrl+Z to undo)")) { restoreSnapshot(s.at); toast.success("Restored"); } }}><RotateCcw /> Restore</Button>
+                <Button size="sm" variant="ghost" onClick={() => { if (confirm("Restore data to this point?")) { restoreSnapshot(s.at); toast.success("Restored"); } }}><RotateCcw /> Restore</Button>
               </li>
             ))}
           </ul>

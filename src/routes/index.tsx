@@ -13,7 +13,7 @@ import { AccountForm } from "@/components/app/AccountForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { workerTotals, CASH, fundAmount, ENTRY_TYPES, fundList, isNetPaid, liveAccounts, liveEntries, liveProduction, notBounced, partyTotals, stockSummary, useData, type EntryType } from "@/lib/db";
+import { workerTotals, CASH, chequeVault, draftEntries, fundAmount, ENTRY_TYPES, fundList, isNetPaid, liveAccounts, liveEntries, liveProduction, notBounced, partyTotals, stockSummary, useData, type EntryType } from "@/lib/db";
 import { fmtDate, fmtPKR, fmtTon, todayISO } from "@/lib/format";
 import { ALL_WIDGETS, dashboard, haptic, MAX_H, MAX_W, useDashboard, WIDGET_LABELS, type WidgetId, type WidgetLayout } from "@/lib/dashboard-layout";
 import { cn } from "@/lib/utils";
@@ -71,6 +71,9 @@ function useStats() {
       purchaseCount: live.filter((e) => e.type === "purchase").length,
       expenseCount: live.filter((e) => e.type === "expense").length,
       bills: d.bills ?? [],
+      draftCount: draftEntries(d).length,
+      draftTotal: draftEntries(d).reduce((s, e) => s + e.amount, 0),
+      chequesInHand: chequeVault(d).filter((c) => c.status === "in_hand"),
     };
   }, [d]);
 }
@@ -120,6 +123,8 @@ const lim = (c: Ctx) => Math.max(1, c.h * 3 - 1);
 const WIDGETS: Record<WidgetId, { to?: string; render: (c: Ctx) => ReactNode }> = {
   treasury: { render: (c) => <TreasuryCard editing={c.editing} w={c.w} /> },
   cheques: { render: (c) => <ChequeStatusCard hidden={c.hidden} /> },
+  cheques_hand: { to: "/cheques-in-hand", render: (c) => <Module c={c} icon={FileText} title="Cheques in Hand" tone="bg-metric-bank" count={money(c, c.chequesInHand.reduce((s, x) => s + x.amount, 0))}><Rows limit={lim(c)} items={c.chequesInHand.map((x) => ({ k: x.id, l: `${x.bank}${x.chequeNo ? ` #${x.chequeNo}` : ""}`, r: money(c, x.amount) }))} /></Module> },
+  drafts: { to: "/drafts", render: (c) => <Module c={c} icon={FileText} title="Drafts" tone="bg-warning" count={`${c.draftCount} · ${money(c, c.draftTotal)}`} /> },
   cash: { to: "/cashbook", render: (c) => <Metric c={c} icon={Wallet} title="Cash in hand" tone="bg-metric-cash" value={c.cashInHand} extra={<span>In this month {money(c, c.monthIn)} · Out {money(c, c.monthOut)}</span>} /> },
   bank: { to: "/banks", render: (c) => <Metric c={c} icon={Landmark} title="Bank balance" tone="bg-metric-bank" value={c.bankTotal} extra={<Rows limit={lim(c)} items={c.funds.filter((f) => f.id !== CASH).map((f) => ({ k: f.id, l: f.name, r: money(c, f.closing) }))} />} /> },
   receivable: { to: "/accounts", render: (c) => <Metric c={c} icon={ArrowDownLeft} title="Receivables" tone="bg-metric-receivable" value={c.receivable} extra={<span>Customer advances {money(c, c.customerAdvance)}</span>} /> },
@@ -323,8 +328,8 @@ function Dashboard() {
 
       <Dialog open={!!entryType} onOpenChange={(o) => !o && setEntryType(undefined)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-          <DialogHeader><DialogTitle>New {entryType ? (ENTRY_TYPES[entryType].action ?? ENTRY_TYPES[entryType].label) : ""} voucher</DialogTitle></DialogHeader>
-          {entryType && <EntryForm key={entryType} defaultType={entryType} onSaved={() => setEntryType(undefined)} />}
+          <DialogHeader><DialogTitle>{entryType ? (ENTRY_TYPES[entryType].action ?? ENTRY_TYPES[entryType].label) : ""}</DialogTitle></DialogHeader>
+          {entryType && <EntryForm key={entryType} defaultType={entryType} onSaved={() => setEntryType(undefined)} onCancel={() => setEntryType(undefined)} />}
         </DialogContent>
       </Dialog>
       <Dialog open={newAcc} onOpenChange={setNewAcc}>
