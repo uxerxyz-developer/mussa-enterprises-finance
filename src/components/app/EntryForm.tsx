@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import { flashEntry } from "@/lib/row-flash";
 import { toast } from "@/lib/toast";
 import { fieldError } from "@/lib/field-error";
@@ -9,7 +10,7 @@ import { AccountSearch, Field, NativeSelect, TitleInput } from "./inputs";
 import { useNamePrompt } from "./NameDialog";
 import {
   addEntry, addNamed, addMaterial, addBank, liveBanks, updateEntry, findDuplicate, getData, useData,
-  ENTRY_TYPES, METHODS, chequeVault, type TPCheque, type Entry, type EntryType, type PayMethod,
+  ENTRY_TYPES, METHODS, chequeVault, postDraft, type TPCheque, type Entry, type EntryType, type PayMethod,
 } from "@/lib/db";
 import { todayISO, amountInWords, fmtTon } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,7 @@ import { ConfirmSave, type ConfirmRow } from "./ConfirmSave";
 const DRAFT = "cashbook-entry-draft";
 const TYPE_ORDER: EntryType[] = ["inward", "outward", "sale", "purchase", "salary", "advance", "expense"];
 
-export function EntryForm({ initial, onSaved, defaultType = "inward", defaultAccountId, typeChoices }: { initial?: Entry; onSaved?: (e?: Entry) => void; defaultType?: EntryType; defaultAccountId?: string; typeChoices?: EntryType[] }) {
+export function EntryForm({ initial, onSaved, onCancel, defaultType = "inward", defaultAccountId, typeChoices }: { initial?: Entry; onSaved?: (e?: Entry) => void; onCancel?: () => void; defaultType?: EntryType; defaultAccountId?: string; typeChoices?: EntryType[] }) {
   const d = useData();
   const [type, setType] = useState<EntryType>(initial?.type ?? defaultType);
   const [date, setDate] = useState(initial?.date ?? todayISO());
@@ -101,10 +102,17 @@ export function EntryForm({ initial, onSaved, defaultType = "inward", defaultAcc
     setFormKey((k) => k + 1);
   };
 
-  const submit = (ev?: React.FormEvent, asDraft = false) => {
+  const handleCancel = () => {
+    const dirty = !initial && !!(amount || particulars || accountId || remarks || weight || rate || tpRows.length || fwdIds.length);
+    if (dirty && !confirm("Discard this entry? Nothing you've entered will be saved.")) return;
+    onCancel?.();
+  };
+
+  const submit = (ev?: React.FormEvent, mode?: "draft" | "post") => {
     ev?.preventDefault();
+    const asDraft = mode === "draft";
     const tpOn = type === "inward" || type === "outward";
-    if (tpOn && type === "inward" && tpRows.some((c) => !c.amount || c.amount <= 0 || !c.bank.trim())) { toast.error("Each third-party cheque needs a bank and amount"); return; }
+    if (tpOn && type === "inward" && tpRows.some((c) => !c.amount || c.amount <= 0 || !c.bank.trim())) { toast.error("Please enter bank and amount for every cheque."); return; }
     if (tpOn && tpTotal > amt + 0.001) { fieldError("f-amount", `Cheques (Rs ${tpTotal.toLocaleString("en-PK")}) exceed the total amount`); return; }
     if (meta.party && !accountId) { fieldError("f-account", type === "salary" || type === "advance" ? "Please select the worker" : "Please select an account"); return; }
     if (type === "expense" && !accountId) { fieldError("f-paidto", "Please select who this expense was paid to"); return; }
@@ -141,7 +149,13 @@ export function EntryForm({ initial, onSaved, defaultType = "inward", defaultAcc
     const save = () => {
     if (initial) {
       updateEntry(initial.id, payload);
-      toast.success(`Voucher V-${initial.voucherNo} updated`);
+      if (mode === "post" && initial.draft) {
+        const r = postDraft(initial.id);
+        if (r.ok) toast.success(`Voucher V-${initial.voucherNo} posted to ledgers`);
+        else toast.error(`${r.error} — changes saved, still a draft`);
+      } else {
+        toast.success(`Voucher V-${initial.voucherNo} updated`);
+      }
       onSaved?.();
     } else {
       const e = addEntry(payload);
@@ -175,15 +189,16 @@ export function EntryForm({ initial, onSaved, defaultType = "inward", defaultAcc
       ["Amount", `Rs ${amt.toLocaleString("en-PK")}`],
       ["In words", amountInWords(amt)],
       [type === "purchase" ? "Purchase Type" : "Sale Type", trade && payMode ? `${payMode === "credit" ? "Credit" : "Net"} ${type === "purchase" ? "Purchase" : "Sale"}${payMode === "credit" ? "" : " (balance unchanged)"}` : undefined],
-      ["Third-party cheques", tpTotal > 0 ? `Rs ${tpTotal.toLocaleString("en-PK")} (${type === "inward" ? tpRows.length : fwdIds.length} cheque(s), no bank effect)` : undefined],
-      ["Own funds", tpTotal > 0 && ownAmt > 0 ? `Rs ${ownAmt.toLocaleString("en-PK")}` : undefined],
-      ["Status", asDraft ? "Draft (no ledger effect until posted)" : undefined],
+      [type === "inward" ? "Cheques Received" : "Forwarded Cheques", tpTotal > 0 ? `Rs ${tpTotal.toLocaleString("en-PK")} (${type === "inward" ? tpRows.length : fwdIds.length} cheque(s), party account only)` : undefined],
+      ["Remaining balance", tpTotal > 0 && ownAmt > 0 ? `Rs ${ownAmt.toLocaleString("en-PK")}` : undefined],
+      ["Status", asDraft ? "Draft (no ledger effect until posted)" : mode === "post" ? "Posting to ledgers now" : undefined],
       ["Method", showPay ? `${METHODS[method] ?? method}${method !== "cash" && bankName ? ` · ${bankName}` : ""}` : undefined],
       ["Particulars", payload.particulars], ["Remarks", payload.remarks],
     ];
-    setPending({ rows, save });
+    const confirmLabel = asDraft ? "Confirm & Save Draft" : mode === "post" ? "Confirm & Post" : initial ? "Confirm & Update" : "Confirm & Save";
+    setPending({ rows, save, confirmLabel });
   };
-  const [pending, setPending] = useState<{ rows: ConfirmRow[]; save: () => void } | null>(null);
+  const [pending, setPending] = useState<{ rows: ConfirmRow[]; save: () => void; confirmLabel: string } | null>(null);
 
   const cap = (s: string) => s.trim().replace(/(^|\s)(\p{L})/gu, (_m, a, b) => a + b.toUpperCase());
   const addCat = async () => {
@@ -192,11 +207,11 @@ export function EntryForm({ initial, onSaved, defaultType = "inward", defaultAcc
   };
 
   return (
-    <form onSubmit={submit} data-entry-form className="space-y-4">
+    <form onSubmit={submit} data-entry-form className="w-full min-w-0 space-y-4">
       {names.node}
       {draft && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-sm">
-          <span className="font-medium">Unsaved draft found. Restore it?</span>
+          <span className="font-medium">Unsaved entry found. Restore it?</span>
           <div className="flex gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={discardDraft}>Discard</Button>
             <Button type="button" size="sm" onClick={restoreDraft}>Restore</Button>
@@ -355,39 +370,46 @@ export function EntryForm({ initial, onSaved, defaultType = "inward", defaultAcc
       )}
 
       {(type === "inward" || type === "outward") && (
-        <div className="space-y-2 rounded-lg border border-dashed p-3">
+        <div className="min-w-0 space-y-2 rounded-lg border border-dashed p-3">
           <div className="flex items-center justify-between gap-2">
-            <div>
-              <div className="text-sm font-semibold">{type === "inward" ? "Third-party cheques received" : "Forward cheques from hand"}</div>
-              <div className="text-xs text-muted-foreground">Party balance only · no effect on own bank or cash</div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold">{type === "inward" ? "Cheques Received" : "Forward Cheques"}</div>
+              <div className="text-xs text-muted-foreground">Posted to party account only. Cash and bank balances are not affected.</div>
             </div>
-            {type === "inward" && <Button type="button" size="sm" variant="outline" onClick={addTpRow}>+ Add Cheque</Button>}
+            {type === "inward" && <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={addTpRow}>+ Add Cheque</Button>}
           </div>
-          {type === "inward" && tpRows.map((c) => (
-            <div key={c.id} className="grid grid-cols-2 gap-2 rounded-md bg-secondary/40 p-2 sm:grid-cols-6">
-              <Input list="pk-banks" placeholder="Bank *" value={c.bank} onChange={(e) => setTp(c.id, { bank: e.target.value })} className="col-span-2 sm:col-span-1" />
-              <Input placeholder="Cheque #" value={c.chequeNo} onChange={(e) => setTp(c.id, { chequeNo: e.target.value })} className="num" />
-              <Input type="date" value={c.date} onChange={(e) => setTp(c.id, { date: e.target.value })} />
-              <Input placeholder="Drawer (optional)" value={c.drawer ?? ""} onChange={(e) => setTp(c.id, { drawer: e.target.value })} />
-              <Input inputMode="decimal" placeholder="Amount *" className="num text-right" value={c.amount ? String(c.amount) : ""} onChange={(e) => setTp(c.id, { amount: Number(e.target.value.replace(/[^0-9.]/g, "")) || 0 })} />
-              <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={() => setTpRows((r) => r.filter((x) => x.id !== c.id))}>Remove</Button>
+          {type === "inward" && tpRows.map((c, i) => (
+            <div key={c.id} className="min-w-0 space-y-2 rounded-md bg-secondary/40 p-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-medium text-muted-foreground">Cheque {i + 1}</span>
+                <button type="button" aria-label="Remove cheque" className="rounded p-1 text-muted-foreground hover:text-destructive" onClick={() => setTpRows((r) => r.filter((x) => x.id !== c.id))}>
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input list="pk-banks" placeholder="Bank *" value={c.bank} onChange={(e) => setTp(c.id, { bank: e.target.value })} className="min-w-0" />
+                <Input placeholder="Cheque #" value={c.chequeNo} onChange={(e) => setTp(c.id, { chequeNo: e.target.value })} className="num min-w-0" />
+                <Input type="date" value={c.date} onChange={(e) => setTp(c.id, { date: e.target.value })} className="min-w-0" />
+                <Input inputMode="decimal" placeholder="Amount *" className="num min-w-0 text-right" value={c.amount ? String(c.amount) : ""} onChange={(e) => setTp(c.id, { amount: Number(e.target.value.replace(/[^0-9.]/g, "")) || 0 })} />
+                <Input placeholder="Drawer (optional)" value={c.drawer ?? ""} onChange={(e) => setTp(c.id, { drawer: e.target.value })} className="col-span-2 min-w-0" />
+              </div>
             </div>
           ))}
           {type === "inward" && <datalist id="pk-banks">{PK_BANKS.map((n) => <option key={n} value={n} />)}</datalist>}
           {type === "outward" && (vault.length === 0
-            ? <p className="text-xs text-muted-foreground">No third-party cheques in hand.</p>
-            : <div className="max-h-56 space-y-1 overflow-y-auto">{vault.map((c) => (
-              <label key={c.id} className={cn("flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm", fwdIds.includes(c.id) && "border-primary bg-primary/10")}>
-                <input type="checkbox" checked={fwdIds.includes(c.id)} onChange={(e) => setFwdIds((ids) => e.target.checked ? [...ids, c.id] : ids.filter((x) => x !== c.id))} />
-                <span className="min-w-0 flex-1 truncate">{c.bank}{c.chequeNo ? ` #${c.chequeNo}` : ""} · {c.date}{c.drawer ? ` · ${c.drawer}` : ""} · from {d.accounts.find((a) => a.id === c.fromAccountId)?.name ?? "—"}</span>
-                <span className="num font-semibold">Rs {c.amount.toLocaleString("en-PK")}</span>
+            ? <p className="text-xs text-muted-foreground">No cheques in hand to forward.</p>
+            : <div className="max-h-56 min-w-0 space-y-1 overflow-y-auto">{vault.map((c) => (
+              <label key={c.id} className={cn("flex min-w-0 cursor-pointer items-center gap-2 rounded-md border p-2 text-sm", fwdIds.includes(c.id) && "border-primary bg-primary/10")}>
+                <input type="checkbox" className="shrink-0" checked={fwdIds.includes(c.id)} onChange={(e) => setFwdIds((ids) => e.target.checked ? [...ids, c.id] : ids.filter((x) => x !== c.id))} />
+                <span className="min-w-0 flex-1 truncate">{c.bank}{c.chequeNo ? ` #${c.chequeNo}` : ""}</span>
+                <span className="num shrink-0 font-semibold">Rs {c.amount.toLocaleString("en-PK")}</span>
               </label>
             ))}</div>)}
           {tpTotal > 0 && (
             <div className={cn("flex flex-wrap justify-between gap-2 text-xs", tpTotal > amt ? "text-destructive" : "text-muted-foreground")}>
-              <span>Cheques: <b className="num">Rs {tpTotal.toLocaleString("en-PK")}</b></span>
-              <span>Own {showPay ? METHODS[method] : "funds"}: <b className="num">Rs {ownAmt.toLocaleString("en-PK")}</b></span>
-              {!amt && <button type="button" className="underline" onClick={() => setAmount(String(tpTotal))}>Use as total</button>}
+              <span>{type === "inward" ? tpRows.length : fwdIds.length} cheque(s) · <b className="num">Rs {tpTotal.toLocaleString("en-PK")}</b></span>
+              {showPay && ownAmt > 0 && <span>Remaining balance paid by {METHODS[method]}: <b className="num">Rs {ownAmt.toLocaleString("en-PK")}</b></span>}
+              {!amt && <button type="button" className="underline" onClick={() => setAmount(String(tpTotal))}>Set as Total Amount</button>}
             </div>
           )}
         </div>
@@ -399,16 +421,23 @@ export function EntryForm({ initial, onSaved, defaultType = "inward", defaultAcc
         </Field>
       </div>
 
-      <div className="flex items-center justify-end gap-2 pt-1">
-        <span className="mr-auto text-xs text-muted-foreground">Press <kbd className="rounded border bg-secondary px-1">Ctrl</kbd>+<kbd className="rounded border bg-secondary px-1">S</kbd> to save</span>
-        {!initial && <Button type="button" variant="ghost" onClick={reset}>Clear</Button>}
-        {!initial && <Button type="button" variant="outline" onClick={() => submit(undefined, true)}>Save as Draft</Button>}
-        <Button type="submit" variant={type === "sale" ? "sale" : type === "purchase" ? "purchase" : meta.flow === "in" ? "success" : meta.flow === "out" ? "destructive" : "default"}>
-          {initial ? "Update Entry" : `Save ${meta.label}`}
-        </Button>
+      <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-end">
+        {(onCancel || !initial) && (
+          <div className="flex gap-2">
+            {onCancel && <Button type="button" variant="ghost" className="flex-1 sm:flex-none" onClick={handleCancel}>Cancel</Button>}
+            {!initial && <Button type="button" variant="ghost" className="flex-1 sm:flex-none" onClick={reset}>Clear</Button>}
+          </div>
+        )}
+        <div className="flex gap-2">
+          {!initial && <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => submit(undefined, "draft")}>Save as Draft</Button>}
+          {initial?.draft && <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => submit(undefined, "post")}>Post to Ledgers</Button>}
+          <Button type="submit" className="flex-1 sm:flex-none" variant={type === "sale" ? "sale" : type === "purchase" ? "purchase" : meta.flow === "in" ? "success" : meta.flow === "out" ? "destructive" : "default"}>
+            {initial ? (initial.draft ? "Update Draft" : "Update") : "Save & Post"}
+          </Button>
+        </div>
       </div>
       <ConfirmSave open={!!pending} title={initial ? `Update Voucher V-${initial.voucherNo}?` : `Save ${meta.label}?`} rows={pending?.rows ?? []}
-        confirmLabel={initial ? "Confirm & Update" : "Confirm & Save"}
+        confirmLabel={pending?.confirmLabel ?? "Confirm & Save"}
         onCancel={() => setPending(null)}
         onConfirm={() => { const p = pending; setPending(null); p?.save(); }} />
     </form>

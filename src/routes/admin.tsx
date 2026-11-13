@@ -159,7 +159,7 @@ function AdminPanel() {
         <DialogContent className="sm:max-w-2xl"><DialogHeader><DialogTitle>Edit Account</DialogTitle></DialogHeader>{editAcc && <AccountForm initial={editAcc} onSaved={() => setEditAcc(undefined)} />}</DialogContent>
       </Dialog>
       <Dialog open={!!editEnt} onOpenChange={(o) => !o && setEditEnt(undefined)}>
-        <DialogContent className="sm:max-w-4xl"><DialogHeader><DialogTitle>Edit Voucher V-{editEnt?.voucherNo}</DialogTitle></DialogHeader>{editEnt && <EntryForm initial={editEnt} onSaved={() => setEditEnt(undefined)} />}</DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>Edit Voucher V-{editEnt?.voucherNo}</DialogTitle></DialogHeader>{editEnt && <EntryForm initial={editEnt} onSaved={() => setEditEnt(undefined)} onCancel={() => setEditEnt(undefined)} />}</DialogContent>
       </Dialog>
     </div>
   );

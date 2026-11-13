@@ -387,8 +387,8 @@ function LedgerPage() {
          else if (confirm(`Delete voucher V-${pending.entry.voucherNo}? You can restore it from the Recycle Bin.`)) { deleteItems("entry", [pending.entry.id]); toast.success("Moved to Recycle Bin"); }
          setPending(null);
        }} />
-       <Dialog open={!!editing} onOpenChange={(open) => { if (!open) setEditing(null); }}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>Edit Voucher V-{editing?.voucherNo}</DialogTitle></DialogHeader>{editing && <EntryForm key={editing.id} initial={editing} onSaved={() => setEditing(null)} />}</DialogContent></Dialog>
-       <Dialog open={adding} onOpenChange={setAdding}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>New Entry · {a.name} ({a.code})</DialogTitle></DialogHeader>{adding && <EntryForm defaultType={choices[0] ?? "inward"} typeChoices={choices} defaultAccountId={a.id} onSaved={() => setAdding(false)} />}</DialogContent></Dialog>
+       <Dialog open={!!editing} onOpenChange={(open) => { if (!open) setEditing(null); }}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>Edit Voucher V-{editing?.voucherNo}</DialogTitle></DialogHeader>{editing && <EntryForm key={editing.id} initial={editing} onSaved={() => setEditing(null)} onCancel={() => setEditing(null)} />}</DialogContent></Dialog>
+       <Dialog open={adding} onOpenChange={setAdding}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>New Entry · {a.name} ({a.code})</DialogTitle></DialogHeader>{adding && <EntryForm defaultType={choices[0] ?? "inward"} typeChoices={choices} defaultAccountId={a.id} onSaved={() => setAdding(false)} onCancel={() => setAdding(false)} />}</DialogContent></Dialog>
     </div>
   );
 }

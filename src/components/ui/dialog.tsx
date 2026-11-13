@@ -66,14 +66,17 @@ const DialogContent = React.forwardRef<
       )}
       {...props}
     >
-      <DialogPrimitive.Close className="-mb-2 -mt-2 inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md py-1 pr-2 text-sm font-medium text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Back
-      </DialogPrimitive.Close>
+      {/* Sticky so Back/Close stay put while a tall form scrolls underneath, instead of drifting with the content. */}
+      <div className="sticky top-0 -mx-6 -mt-6 z-20 flex items-center justify-between gap-2 bg-background px-6 pb-2 pt-4">
+        <DialogPrimitive.Close className="inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-md py-1 pr-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Back
+        </DialogPrimitive.Close>
+        <DialogPrimitive.Close className="rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      </div>
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>
 ));

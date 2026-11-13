@@ -7,7 +7,7 @@ import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger 
 import { toast } from "@/lib/toast";
 import { PAGE_SEARCH, setPageSearch, usePageSearch } from "@/lib/page-search";
 import {
-  LayoutDashboard, ListOrdered, Users, BookOpen, Receipt, Wallet, ShieldCheck, Settings, LogOut, Search, Menu, Lock, Moon, Sun, ShoppingCart, BadgeDollarSign, HandCoins, RefreshCw, CloudUpload, Flame, Zap, Boxes, FileText, Pencil, Check, Mic, Palette, X,
+  LayoutDashboard, ListOrdered, Users, BookOpen, Receipt, Wallet, ShieldCheck, Settings, LogOut, Search, Menu, Lock, Moon, Sun, ShoppingCart, BadgeDollarSign, HandCoins, RefreshCw, CloudUpload, Flame, Zap, Boxes, FileText, Pencil, Check, Mic, Palette, X, FileClock, Banknote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -45,6 +45,8 @@ const NAV_GROUPS = [
     { to: "/", label: "Dashboard", icon: LayoutDashboard },
     { to: "/entries", label: "All Entries", icon: ListOrdered },
     { to: "/vouchers", label: "Vouchers", icon: FileText },
+    { to: "/drafts", label: "Drafts", icon: FileClock },
+    { to: "/cheques-in-hand", label: "Cheques in Hand", icon: Banknote },
   ] },
   { title: "Operations & Plant", items: [
     { to: "/production", label: "Heat Production", icon: Flame },
@@ -253,7 +255,7 @@ function Shell({ onLogout, dark, onToggleTheme }: { onLogout: (full?: boolean) =
         id="global-search"
         clearOnSelect
         className="w-full [&_input]:border-0 [&_input]:bg-transparent [&_input]:shadow-none [&_input]:focus-visible:ring-0"
-        placeholder="Search accounts…  (Ctrl+F)"
+        placeholder="Search accounts…"
         onSelect={(a) => navigate({ to: "/ledger/$id", params: { id: a.id } })}
       />
       )}

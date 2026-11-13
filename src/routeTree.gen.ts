@@ -14,6 +14,8 @@ import { Route as AccountsRouteImport } from './routes/accounts'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BanksRouteImport } from './routes/banks'
 import { Route as CashbookRouteImport } from './routes/cashbook'
+import { Route as ChequesInHandRouteImport } from './routes/cheques-in-hand'
+import { Route as DraftsRouteImport } from './routes/drafts'
 import { Route as ElectricityRouteImport } from './routes/electricity'
 import { Route as EntriesRouteImport } from './routes/entries'
 import { Route as ExpensesRouteImport } from './routes/expenses'
@@ -54,6 +56,16 @@ const BanksRoute = BanksRouteImport.update({
 const CashbookRoute = CashbookRouteImport.update({
   id: '/cashbook',
   path: '/cashbook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChequesInHandRoute = ChequesInHandRouteImport.update({
+  id: '/cheques-in-hand',
+  path: '/cheques-in-hand',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DraftsRoute = DraftsRouteImport.update({
+  id: '/drafts',
+  path: '/drafts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ElectricityRoute = ElectricityRouteImport.update({
@@ -143,6 +155,8 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/banks': typeof BanksRoute
   '/cashbook': typeof CashbookRoute
+  '/cheques-in-hand': typeof ChequesInHandRoute
+  '/drafts': typeof DraftsRoute
   '/electricity': typeof ElectricityRoute
   '/entries': typeof EntriesRoute
   '/expenses': typeof ExpensesRoute
@@ -166,6 +180,8 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/banks': typeof BanksRoute
   '/cashbook': typeof CashbookRoute
+  '/cheques-in-hand': typeof ChequesInHandRoute
+  '/drafts': typeof DraftsRoute
   '/electricity': typeof ElectricityRoute
   '/entries': typeof EntriesRoute
   '/expenses': typeof ExpensesRoute
@@ -190,6 +206,8 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/banks': typeof BanksRoute
   '/cashbook': typeof CashbookRoute
+  '/cheques-in-hand': typeof ChequesInHandRoute
+  '/drafts': typeof DraftsRoute
   '/electricity': typeof ElectricityRoute
   '/entries': typeof EntriesRoute
   '/expenses': typeof ExpensesRoute
@@ -215,6 +233,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/banks'
     | '/cashbook'
+    | '/cheques-in-hand'
+    | '/drafts'
     | '/electricity'
     | '/entries'
     | '/expenses'
@@ -238,6 +258,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/banks'
     | '/cashbook'
+    | '/cheques-in-hand'
+    | '/drafts'
     | '/electricity'
     | '/entries'
     | '/expenses'
@@ -261,6 +283,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/banks'
     | '/cashbook'
+    | '/cheques-in-hand'
+    | '/drafts'
     | '/electricity'
     | '/entries'
     | '/expenses'
@@ -285,6 +309,8 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   BanksRoute: typeof BanksRoute
   CashbookRoute: typeof CashbookRoute
+  ChequesInHandRoute: typeof ChequesInHandRoute
+  DraftsRoute: typeof DraftsRoute
   ElectricityRoute: typeof ElectricityRoute
   EntriesRoute: typeof EntriesRoute
   ExpensesRoute: typeof ExpensesRoute
@@ -338,6 +364,20 @@ declare module '@tanstack/react-router' {
       path: '/cashbook'
       fullPath: '/cashbook'
       preLoaderRoute: typeof CashbookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cheques-in-hand': {
+      id: '/cheques-in-hand'
+      path: '/cheques-in-hand'
+      fullPath: '/cheques-in-hand'
+      preLoaderRoute: typeof ChequesInHandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drafts': {
+      id: '/drafts'
+      path: '/drafts'
+      fullPath: '/drafts'
+      preLoaderRoute: typeof DraftsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/electricity': {
@@ -461,6 +501,8 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   BanksRoute: BanksRoute,
   CashbookRoute: CashbookRoute,
+  ChequesInHandRoute: ChequesInHandRoute,
+  DraftsRoute: DraftsRoute,
   ElectricityRoute: ElectricityRoute,
   EntriesRoute: EntriesRoute,
   ExpensesRoute: ExpensesRoute,

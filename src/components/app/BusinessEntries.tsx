@@ -16,6 +16,6 @@ export function BusinessEntries({ type, title, accountType }: { type: EntryType;
   return <div>
     <PageHeader title={title} subtitle={`${list.length} records · ${fmtPKR(total)}`} actions={<Button variant={type === "sale" ? "sale" : type === "purchase" ? "purchase" : "default"} onClick={() => setOpen(true)}><Plus /> New {ENTRY_TYPES[type].label}</Button>} />
     <EntriesTable entries={list} emptyText={`No ${title.toLowerCase()} recorded yet`} />
-    <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>New {ENTRY_TYPES[type].label}</DialogTitle></DialogHeader><EntryForm defaultType={type} onSaved={() => setOpen(false)} /></DialogContent></Dialog>
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>New {ENTRY_TYPES[type].label}</DialogTitle></DialogHeader><EntryForm defaultType={type} onSaved={() => setOpen(false)} onCancel={() => setOpen(false)} /></DialogContent></Dialog>
   </div>;
 }
